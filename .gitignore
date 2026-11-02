@@ -1,0 +1,21 @@
+# Copyrighted files: never version them
+tos/
+*.img
+*.rom
+*.st
+*.msa
+*.stx
+*.prg
+*.PRG
+*.tos
+*.TOS
+*.app
+*.APP
+# Build output and local tools
+build/
+out/
+.tools/
+__pycache__/
+*.pyc
+*.lst
+local/
