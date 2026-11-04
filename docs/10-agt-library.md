@@ -69,8 +69,17 @@ prebuilt binaries of `bin/` and building external code need the user's explicit 
 ### Building the `.deb` files from GitHub (verified, ≈ 30 min on 4 cores)
 
 `https://github.com/vinriviere/cross-mint-ubuntu` holds the Debian source packages that feed
-the PPA (upstream tarballs + MiNT patches + `debian/`). GCC and MiNTlib depend on each other,
-so a temporary C-only GCC ("stage 1") is built first:
+the PPA (upstream tarballs + MiNT patches + `debian/`). **`scripts/get-cross-mint.sh` does
+everything below**, keeps the five `.deb` files in `.tools/cross-mint/debs/` and ends by
+compiling and linking a small C program with MiNTlib:
+
+```sh
+sh scripts/get-cross-mint.sh               # build from GitHub (≈ 30 min), then install
+sh scripts/get-cross-mint.sh /path/to/debs # next session: install the kept .deb files only
+```
+
+What the script does by hand (GCC and MiNTlib depend on each other, so a temporary C-only
+GCC, "stage 1", is built first):
 
 ```sh
 apt-get install -y devscripts debhelper fakeroot texinfo bison flex libfl-dev gettext \
@@ -116,21 +125,14 @@ Verified recipe with the Debian packages above (Ubuntu 24.04 host):
 ```sh
 ln -sfn /long/path/to/agtools /tmp/agt     # SHORT path: rmac crashes on long -I paths
 export AGTROOT=/tmp/agt                    # must be exported (assets_com.sh bug, see below)
-cat > /tmp/mint-ar <<'EOF'
-#!/bin/sh
-# MiNT ar with the a.out target forced (host LTO plugins hide rmac symbols)
-op=$1; shift
-exec m68k-atari-mint-ar --target=a.out-zero-big -$op "$@"
-EOF
-chmod +x /tmp/mint-ar
-MK="make -j4 TOOLCHAIN_INSTALL=/usr AR=/tmp/mint-ar"
+MK="make -j4 TOOLCHAIN_INSTALL=/usr AR=/path/to/playbook/tools/mint-ar"
 cd $AGTROOT/examples/hiworld && $MK        # build/hiworld.prg, build/mchdet.prg -> disk1/, disk2/
 cd $AGTROOT/examples/sprtest && bash assets_com.sh && $MK   # assets (≈ 40 s), then disk1/
 ```
 
 - `TOOLCHAIN_INSTALL=/usr`: `makedefs.mintgcc` expects `/opt/cross-mint`, the packages
   install into `/usr`.
-- `AR=…/mint-ar`: on a host with `/usr/lib/bfd-plugins/` (LLVM gold, GCC LTO plugins), the MiNT
+- `AR=…/tools/mint-ar` (in this repository): on a host with `/usr/lib/bfd-plugins/` (LLVM gold, GCC LTO plugins), the MiNT
   `ar`/`nm` see **no symbols** in the a.out objects written by rmac; the archive index of
   `aglib_ste.a` then lacks `_SYS_Claim`, `_qmemclr`, `_bSTE`… and the link fails with
   "undefined reference" (also to `___mulsi3`, a consequence). Forcing `a.out-zero-big` fixes it.
