@@ -118,3 +118,4 @@ Full catalogue: `docs/06-pitfalls.md`.
 | `docs/07-case-studies.md` | Projects carried out and lessons from each |
 | `docs/08-law-and-publication.md` | What to publish, what not to publish |
 | `docs/09-working-with-claude.md` | Way of collaborating, sessions, resuming, request templates |
+| `docs/10-agt-library.md` | AGT (Atari Game Tools, STE game framework): toolchain, build, API, assets — not in the repo |
