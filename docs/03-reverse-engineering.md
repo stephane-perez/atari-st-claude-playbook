@@ -37,6 +37,22 @@ signatures (`ICE!`, `ATM5`…). Real cases:
 ## 2. Unpack
 
 - **Pack-Ice**: the stub's depacker is short; transcribe it faithfully into Python.
+  `tools/unice.py` handles 2.3x (`Ice!`) and 2.40 (`ICE!`). They differ (bit buffer of a
+  long word vs a byte, distance tables, picture pass), and a lower-case header does not prove
+  the version: the 47 `Ice!` files of one game all fail when decoded as 2.40 (some
+  depackers, such as unice68 according to its source, accept both headers with the 2.40
+  algorithm). Verification:
+  - 2.3x: byte for byte against the game's own depacker run in Unicorn (47 files);
+  - both: `tools/unice_fuzz.py`, differential fuzzing against a 68000 routine run in
+    Unicorn (the game's for 2.3x, the published PACK-ICE 2.40 source re-typed and assembled
+    with vasm for 2.40), with VALID random streams covering every path: several thousand
+    cases, 0 difference; 6 deliberate mutations detected. No real `ICE!` file was available:
+    confirm on one when you have it.
+  - Curiosity of the published 2.40 routine: `move.w #$0F9F,d7` overwrites the bit buffer
+    just before reading the picture-pass block count, so that count always starts with the
+    bits `001111` (at least 15,361 blocks, 122 KB). `unice.py` reproduces it as is.
+  A game may transform the data again after depacking (one kept its pictures
+  bit-transposed): look at the result (round trip to PNG) before concluding.
 - **Atomik (ATM5)**: rather than transcribing, emulate the stub with Unicorn and hook the
   final copy, then take the unpacked image.
 - Always **verify**: expected size (given in the packed header), and that the result looks like
@@ -48,7 +64,38 @@ signatures (`ICE!`, `ATM5`…). Real cases:
   program is unpacked in place, at its full size. Pack only once the user has agreed (on one
   project the author chose to leave the game uncompressed and keep UPX for the intro).
 
+## 2b. Floppies without files (track loaders)
+
+Many games have no usable directory: an executable boot sector (word checksum `$1234`)
+loads a second stage that drives the WD1772 directly and reads files from its own table.
+Method that worked (`.STX` image of a 1992 game):
+
+1. `tools/stx.py IMAGE.stx` : geometry, sector order, **protection marks** (a sector with a
+   CRC error and a timing record = key sector, for example Copylock ST). Describe them,
+   never circumvent them (`docs/08`).
+2. `tools/stx.py IMAGE.stx --dump flat.st`, then disassemble the boot sector from `$1E`
+   (bra `$601E`): it says which logical sectors it reads and in which order (cylinder,
+   side, sector), which is also the addressing of the file table.
+3. Find the file table (often a sector read by the second stage; it may be **filled at run
+   time**: empty in the loader's source, present elsewhere on the disk).
+4. **Confirm with Hatari**, which reads `.STX` directly: `--extra "--trace fdc"`, keep the
+   `type II read sector` lines (track, side, sector, DMA address, pc) and map them to the
+   table. This shows the real loading order and the memory configuration effects (one game
+   preloaded all its files with 1 MB, loaded them on demand with 512 KB).
+5. Entropy per track gives a quick map: packed data near 7.7 bits/byte, formatted but unused
+   tracks are a repeated pattern (`$6DB6`, `$E5`).
+
 ## 3. Recursive disassembly
+
+`tools/m68k_recdis.py IMAGE LOAD_ADDR OUT.lst [--entry A] [--labels FILE] [--pointer-scan]`
+does it for a raw memory image (an unpacked program, a loader, an SNDH): labels for every
+target, a names file (`ADDRESS NAME comment`) applied at each run, vectors found from
+`move.l #x,$70.w` and `lea x,aN` + `move.l aN,$70(a0)` (with `a0` known to be 0), `jsr (aN)`
+after `lea`. `--pointer-scan` tries the long words of the data areas that point into the
+image as code (function tables, object handlers), keeping them only if they decode as 68000
+code up to `rts/rte/bra/jmp` and do not start with `ori` (`$00xx`, almost always data). On a
+70 KB compiled-like game program: 14 % of the bytes as code by flow alone, 34 % with the
+pointer scan. A study listing, not a reassemblable source.
 
 A linear disassembly mixes code and data. **Recursive** disassembly follows the flow: entry
 point → targets of `bra/bsr/jsr/jmp/Bcc/DBcc` → following instructions until `rts/rte/bra/jmp`.
@@ -114,6 +161,27 @@ and if needed memory states (`:dump`). See `docs/04`.
 
 Extract images, sounds, maps with a round trip: `binary → PNG` then `PNG → binary` must give
 exactly the same bytes. A resource format is only "understood" once the round trip is exact.
+
+- **Pictures**: `tools/pi1png.py` (PI1 <-> indexed PNG; the first word and the exact palette
+  words are kept in PNG text chunks). Check the colours against a Hatari screenshot: in one
+  game the full-screen pictures used the STE nibble order (bit 3 = least significant) while
+  the tile-set palettes were stored as linear 0..15 values and converted by the game. Compare
+  index -> colour maps on known colours, never by eye.
+- **Maps**: render the whole level from the tile set and compare a region with a screenshot
+  taken in the game (find the scroll offset by search); in one game 95.4 % of the play field
+  pixels were identical, the rest being sprites.
+- **Music (YM2149)**: many players are position-independent code + data with a few entry
+  points (init with the tune number in `d0`, play once per VBL, effect, stop). Read them in
+  the player and in the program's calls, then:
+  1. `tools/ym_emu.py PLAYER.BIN --init 0 --play 4 --d0 N`: runs it in Unicorn, records the
+     registers per frame, reports accesses outside the player (a player that is not
+     self-contained shows up there; one read low memory through a null pointer, see
+     `--tos`);
+  2. `tools/sndh_wrap.py`: makes an SNDH with the **unmodified** player (`--zero-based` when
+     its init expects 0..n-1);
+  3. `tools/sndh_record.py`: plays the SNDH in Hatari with a real TOS, compares the YM writes
+     frame by frame with `ym_emu.py` and saves the audio (`docs/04`).
+  On one game: 9 tunes and 32 effects, every frame identical between Hatari and Unicorn.
 
 ## 9. Name, comment
 
