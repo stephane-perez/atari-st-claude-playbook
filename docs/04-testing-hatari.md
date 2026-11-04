@@ -189,6 +189,28 @@ was started, where its basepage is, how much it keeps and asks for, which file i
 which path. Run it with `--mem 512` and each TOS (1.00 and 1.04 do not leave the same memory
 free, see `docs/05`).
 
+## Recording audio and tracing the YM
+
+`tools/sndh_record.py` automates what follows (test input: `examples/sndh/beep.s`).
+
+- **Audio**: `--sound 44100 --avirecord --avi-file x.avi` records the emulated sound in the
+  AVI even with `SDL_AUDIODRIVER=dummy` and no sound card; `ffmpeg -i x.avi -vn` extracts it
+  (`silenceremove=start_periods=1:start_threshold=-60dB` drops the boot). The AVI header
+  announced 60.04 fps on a 50 Hz machine: trust the trace, not that header.
+- **Stopping by itself**: `--run-vbls N`. TOS 1.04 + GEMDOS drive + `--auto` took more than
+  30 s before the program ran: count 1800 VBLs of margin. `--fast-forward yes` gained almost
+  nothing while recording an AVI (PNG frames are encoded): plan real time.
+- **YM writes**: `--trace psg_write,video_vbl` gives `ym write data reg=.. val=.. pc=..` and
+  one `VBL n ... vbl_cycles=160256` line per frame (160256 = 50 Hz, 133xxx = 60 Hz). Cut the
+  frames on the `VBL` lines; cutting on a decrease of `video_cyc` merges frames as soon as a
+  frame's writes start later than the previous one's ended. Keep only the writes whose `pc`
+  is in RAM (the TOS also writes the YM: port A, floppy select).
+- **Missed VBL**: in each long recording, Hatari showed once a VBL with no call of the player
+  (no write, then the same state one frame later). Cause not found; resynchronise rather than
+  count it as a difference.
+- **Compare "as heard"**: ignore bits 6-7 of register 7 (I/O port directions, set by TOS) and
+  the noise period when no channel uses noise.
+
 ## Measuring raster timing
 
 When colours flicker on one machine and not another, measure *when* the palette is written

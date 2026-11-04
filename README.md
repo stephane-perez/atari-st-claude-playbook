@@ -10,9 +10,13 @@ disassemble Atari ST/STE/Mega STE/Falcon binaries and test them: method, tools, 
 - **`tools/`**: `hatari_run.py` (headless Hatari), `hatari-joysticks.cfg` (joysticks on the
   keyboard), `mkst.py` (FAT12 images), `prg_info.py` (PRG inspector), `emu_snippets.py`
   (Capstone/Unicorn), `txt2st.py` (texts in the ST character set), `packiff.py` (IFF ILBM
-  repacked with ByteRun1).
+  repacked with ByteRun1), `stx.py` (Pasti .STX reader), `unice.py` (Pack-Ice 2.3x/2.40
+  depacker) and `unice_fuzz.py` (its differential test), `m68k_recdis.py` (recursive
+  disassembler), `pi1png.py` (PI1 <-> PNG), `ym_emu.py`, `sndh_wrap.py`, `sndh_record.py` and
+  `sndhplay.s` (music players: emulation, SNDH, recording in Hatari).
 - **`scripts/`**: installation, vasm, end-to-end test.
 - **`examples/hello`**: minimal original example.
+- **`examples/sndh/beep.s`**: a tiny original SNDH tune, test input for the music tools.
 
 ## Getting started
 
@@ -33,4 +37,5 @@ example run under the four TOS versions. **Not verified on a real machine.**
 ROMs, games, disassemblies of commercial programs, protection circumventions
 (see `docs/08-law-and-publication.md`). Tools from past projects are not included.
 
-License: MIT.
+License: MIT, except `third_party/` (own licences: vasm is redistributed unmodified,
+non-commercial use; see `third_party/README.md`).

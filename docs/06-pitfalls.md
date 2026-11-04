@@ -18,6 +18,15 @@ Each entry: symptom → cause → remedy. Grouped by area.
 | `git push` of a tag refused in a cloud session | the session's git proxy does not push tags | give the user the `git tag … && git push origin …` command |
 | No ROM in the session | ROMs are not in git | EmuTOS (`docs/04`), stated as such in the report |
 
+## Emulation with Unicorn
+
+| Symptom | Cause | Remedy |
+|---|---|---|
+| `UC_ERR_EXCEPTION` on an `rte` of a routine called by `bsr` | `move.w sr,-(a7)` ... `rte` idiom (restores SR, returns) not executed as a 68000 does | stop on each `rte`, pop SR then PC by hand (`tools/ym_emu.py`) |
+| Stack writes at `$FFFFFFxx` after setting A7 | A7 written in user mode (USP), then SR set to supervisor: A7 is the SSP (0) | write SR first, then A7 |
+| Accesses to `$FFFF8800` not seen as the YM | absolute short `$8800.w` is sign-extended to 32 bits | map `$FFFF0000-$FFFFFFFF` too, compare on the low 24 bits |
+| Emulated player and Hatari disagree only when a sound ends | the player writes nothing when silent: frames without writes | one entry per VBL, "no write" included (`docs/04`) |
+
 ## Assembly
 
 | Symptom | Cause | Remedy |
@@ -104,6 +113,13 @@ Each entry: symptom → cause → remedy. Grouped by area.
 | Symptom | Cause | Remedy |
 |---|---|---|
 | "Floppy image" that is not one | packed PRG (Pack-Ice, Atomik) | `prg_info.py` |
+| Game floppy shows an empty directory or a bogus BPB | track loader, no files | `tools/stx.py --dump`, boot sector, file table, `--trace fdc` (docs/03 §2b) |
+| Depacked picture garbled although the depacker is verified | the game transforms the data again (bit transposition) | find the routine that uses the data, compare with a Hatari screenshot |
+| Pack-Ice file decoded as garbage or error | 2.3x and 2.40 differ; `Ice!` vs `ICE!` header, some depackers treat both as 2.40 | `unice.py --variant 2.3/2.4` |
+| Rebuilt level colours wrong, pictures right | tile-set palette stored as linear 0..15 values, not in the STE order | compare index -> colour with a Hatari screenshot |
+| Recursive disassembly finds "code" in data | pointer scan on a table of values | reject candidates starting with `ori` (`$00xx`), check by eye |
+| File table of a loader full of zeros | filled at run time from another sector | trace the FDC reads in Hatari |
+| A TOS ROM file of 262,145 bytes | one extra trailing byte | keep the first 256 KB (check the header: `$602E`, version, base) |
 | mtools: hidden sectors warning | Atari partition | `MTOOLS_SKIP_CHECK=1` |
 | `mtools` does not copy as is | text vs binary | `mcopy -bspm` |
 | Text file unreadable on the Atari | UTF-8 accents | plain ASCII for `TO_TEST.TXT`, or `tools/txt2st.py` |

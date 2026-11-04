@@ -104,3 +104,21 @@ property of their authors and publishers.
   hides the buttons in the next `$FF9200` read.
 - Lessons: in both cases the faulty code worked in Hatari; only the real machine showed the
   problem. Raw values on screen beat guessing.
+
+## Action game on a track-loader floppy (1992) — structure and assets
+
+- Goal: understand a commercial game delivered as a Pasti (`.STX`) image and extract its
+  assets for study (kept in a private repository, `docs/08`).
+- Techniques: `stx.py` (geometry, Copylock key sector described, not circumvented), boot
+  sector and second stage read by hand, file table found in a sector filled at run time,
+  Hatari `--trace fdc` to map the loads (preload with 1 MB, on demand with 512 KB);
+  Pack-Ice 2.3x depacker checked against the game's own routine in Unicorn; pictures
+  bit-transposed by the game, undone and checked pixel by pixel against a Hatari screenshot;
+  levels rebuilt from map + tile set and compared with an in-game screenshot; music players
+  run in Unicorn, wrapped as SNDH and recorded in Hatari with a frame-by-frame YM check;
+  recursive disassembly with a pointer scan (34 % of the program classified as code).
+- Lessons: read the formats in the code that uses them (load routine, renderer) rather than
+  guessing from the bytes; check colours against the emulator (two palette encodings in one
+  game); a home-made emulation (Unicorn) is only trusted once it matches Hatari; re-test a
+  tool after every change, even a "small" one (a comparison rewrite fell from 100 % to 0.2 %
+  before the alignment was fixed).
