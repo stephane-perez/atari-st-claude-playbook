@@ -11,19 +11,7 @@ your tools, your documentation, your original examples, your method.
 ## What stays out of the repository
 
 - TOS ROMs (Atari copyright);
-- commercial games, programs and floppies;
-- disassemblies or reconstructed sources of a commercial program (derivative work);
-- images, sounds, texts extracted from a program;
-- excerpts of original bytes (even short ones, in tests);
-- any circumvention of protection (dongle, copy protection).
-
-`.gitignore` blocks common extensions (`*.img`, `*.rom`, `*.st`, `*.msa`, `tos/`…): it is a
-safety net, not a guarantee. Check before pushing:
-
-```sh
-git status
-git log --all --name-only --format= | sort -u     # no original file must appear
-```
+- external tools
 
 ## How to document without publishing originals
 
@@ -38,8 +26,7 @@ git log --all --name-only --format= | sort -u     # no original file must appear
 
 1. Contact the rights holder (some grant permission, notably for old games).
 2. Publish **light notes** (file format, structure) rather than the code.
-3. Do not redistribute the original; provide a **patch** that applies to the original the user
-   owns, after checking the hash.
+3. Provide a **patch** that applies to the original the user owns, after checking the hash.
 
 ## Repository licence
 
