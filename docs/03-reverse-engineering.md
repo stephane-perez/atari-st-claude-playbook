@@ -87,6 +87,16 @@ Method that worked (`.STX` image of a 1992 game):
 
 ## 3. Recursive disassembly
 
+`tools/m68k_recdis.py IMAGE LOAD_ADDR OUT.lst [--entry A] [--labels FILE] [--pointer-scan]`
+does it for a raw memory image (an unpacked program, a loader, an SNDH): labels for every
+target, a names file (`ADDRESS NAME comment`) applied at each run, vectors found from
+`move.l #x,$70.w` and `lea x,aN` + `move.l aN,$70(a0)` (with `a0` known to be 0), `jsr (aN)`
+after `lea`. `--pointer-scan` tries the long words of the data areas that point into the
+image as code (function tables, object handlers), keeping them only if they decode as 68000
+code up to `rts/rte/bra/jmp` and do not start with `ori` (`$00xx`, almost always data). On a
+70 KB compiled-like game program: 14 % of the bytes as code by flow alone, 34 % with the
+pointer scan. A study listing, not a reassemblable source.
+
 A linear disassembly mixes code and data. **Recursive** disassembly follows the flow: entry
 point → targets of `bra/bsr/jsr/jmp/Bcc/DBcc` → following instructions until `rts/rte/bra/jmp`.
 Additions that bring coverage above 96%:
@@ -151,6 +161,27 @@ and if needed memory states (`:dump`). See `docs/04`.
 
 Extract images, sounds, maps with a round trip: `binary → PNG` then `PNG → binary` must give
 exactly the same bytes. A resource format is only "understood" once the round trip is exact.
+
+- **Pictures**: `tools/pi1png.py` (PI1 <-> indexed PNG; the first word and the exact palette
+  words are kept in PNG text chunks). Check the colours against a Hatari screenshot: in one
+  game the full-screen pictures used the STE nibble order (bit 3 = least significant) while
+  the tile-set palettes were stored as linear 0..15 values and converted by the game. Compare
+  index -> colour maps on known colours, never by eye.
+- **Maps**: render the whole level from the tile set and compare a region with a screenshot
+  taken in the game (find the scroll offset by search); in one game 95.4 % of the play field
+  pixels were identical, the rest being sprites.
+- **Music (YM2149)**: many players are position-independent code + data with a few entry
+  points (init with the tune number in `d0`, play once per VBL, effect, stop). Read them in
+  the player and in the program's calls, then:
+  1. `tools/ym_emu.py PLAYER.BIN --init 0 --play 4 --d0 N`: runs it in Unicorn, records the
+     registers per frame, reports accesses outside the player (a player that is not
+     self-contained shows up there; one read low memory through a null pointer, see
+     `--tos`);
+  2. `tools/sndh_wrap.py`: makes an SNDH with the **unmodified** player (`--zero-based` when
+     its init expects 0..n-1);
+  3. `tools/sndh_record.py`: plays the SNDH in Hatari with a real TOS, compares the YM writes
+     frame by frame with `ym_emu.py` and saves the audio (`docs/04`).
+  On one game: 9 tunes and 32 effects, every frame identical between Hatari and Unicorn.
 
 ## 9. Name, comment
 

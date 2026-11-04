@@ -58,12 +58,15 @@ sh scripts/smoke-test.sh                # proves the chain: vasm -> Hatari -> TO
 | Assemble | `vasmm68k_mot` | `-Ftos -tos-flags=1 -no-opt -nosym` (docs/02) |
 | Inspect a PRG | `tools/prg_info.py` | header, relocations, packer signatures |
 | Disassemble / emulate the CPU | Capstone, Unicorn | `tools/emu_snippets.py` (tested templates) |
+| Recursive disassembly | `tools/m68k_recdis.py` | flow-following study listing, labels file, `--pointer-scan` (docs/03) |
 | Test without a screen | `tools/hatari_run.py` | Xvfb + xdotool, screenshots, keys (docs/04) |
 | Simulate joysticks | `tools/hatari-joysticks.cfg` | all 6 joysticks on the keyboard, `--down`/`--up` (docs/04) |
 | Floppy image | `tools/mkst.py` | dependency-free FAT12 720/820 KB, reproducible |
 | GEMDOS calls, memory | `--extra "--trace gemdos"` | `Pexec`/`Mshrink`/`Malloc` in `<out>/hatari.log` (docs/04, docs/05) |
 | Texts for the Atari | `tools/txt2st.py` | UTF-8 → ST character set, CR LF, 78 columns |
 | IFF pictures | `tools/packiff.py` | ByteRun1 repacking (memory saving) |
+| PI1 pictures | `tools/pi1png.py` | PI1 <-> indexed PNG, exact round trip |
+| Music (YM) | `tools/ym_emu.py`, `sndh_wrap.py`, `sndh_record.py` | run a player in Unicorn, wrap it as SNDH, record it in Hatari + check (docs/03, docs/04) |
 | Pasti floppy image (.STX) | `tools/stx.py` | tracks, protection marks (CRC, timing), flat sector image |
 | Pack-Ice 2.3x / 2.40 (`Ice!`/`ICE!`) | `tools/unice.py` | depack one file or `--scan` a dump/image; `unice_fuzz.py` to verify (docs/03) |
 | Pack / unpack a PRG | `upx` (`upx-ucl`) | `atari/tos` format; only with the user's agreement (docs/03) |
