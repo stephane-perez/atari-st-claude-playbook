@@ -66,7 +66,7 @@ answer. Three ways out: allow the two Launchpad hosts in the environment's netwo
 attach the `.deb` files to the conversation, or build them from GitHub as below. Running the
 prebuilt binaries of `bin/` and building external code need the user's explicit agreement.
 
-### Building the `.deb` files from GitHub (verified, ≈ 30 min on 4 cores)
+### Building the `.deb` files from GitHub (verified, ≈ 16 min on 4 cores)
 
 `https://github.com/vinriviere/cross-mint-ubuntu` holds the Debian source packages that feed
 the PPA (upstream tarballs + MiNT patches + `debian/`). **`scripts/get-cross-mint.sh` does
@@ -74,8 +74,8 @@ everything below**, keeps the five `.deb` files in `.tools/cross-mint/debs/` and
 compiling and linking a small C program with MiNTlib:
 
 ```sh
-sh scripts/get-cross-mint.sh               # build from GitHub (≈ 30 min), then install
-sh scripts/get-cross-mint.sh /path/to/debs # next session: install the kept .deb files only
+sh scripts/get-cross-mint.sh               # build from GitHub (≈ 16 min), then install
+sh scripts/get-cross-mint.sh /path/to/debs # next session: install the kept .deb files only (seconds)
 ```
 
 What the script does by hand (GCC and MiNTlib depend on each other, so a temporary C-only

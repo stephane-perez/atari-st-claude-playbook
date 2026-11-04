@@ -49,7 +49,7 @@ Practical consequences:
 - C/C++ cross compiler (`m68k-atari-mint-gcc`, needed for AGT, docs/10): Vincent Rivière's
   PPA is refused (`ppa.launchpadcontent.net`, `launchpadlibrarian.net`);
   `scripts/get-cross-mint.sh` builds the `.deb` files from his GitHub packaging repository
-  instead (≈ 30 min), or installs `.deb` files kept from an earlier session.
+  instead (≈ 16 min on 4 cores), or installs `.deb` files kept from an earlier session.
 - The web-reading tools (search, WebFetch) are separate and respect `robots.txt`: a site that
   forbids it cannot be fetched by Claude. Then write a script the user runs on their machine.
 - Do not retry the same request with another command: every path goes through the same

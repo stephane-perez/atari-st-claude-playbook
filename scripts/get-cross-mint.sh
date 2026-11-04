@@ -6,7 +6,7 @@
 #   - otherwise: builds the .deb files from Vincent Riviere's packaging repository
 #     https://github.com/vinriviere/cross-mint-ubuntu (the source of his PPA), using a
 #     temporary C-only GCC ("stage 1") to break the GCC <-> MiNTlib dependency.
-#     About 30 minutes on 4 cores. The .deb files are kept in .tools/cross-mint/debs/
+#     About 16 minutes on 4 cores (11 MB of .deb). The .deb files are kept in .tools/cross-mint/debs/
 #     (attach or copy them for the next session: then this script only runs dpkg -i).
 # Environment: CMU_REV=<commit> to build a given revision of cross-mint-ubuntu.
 set -e
