@@ -33,4 +33,5 @@ Vérifié (Hatari 2.4.1, vasm 2.0f) : construction reproductible, image FAT12 va
 ROM, jeux, désassemblages de programmes commerciaux, contournements de protection
 (voir `docs/08-law-and-publication.md`). Les outils des projets passés ne sont pas inclus.
 
-Licence : MIT. English version: [`README.md`](README.md).
+Licence : MIT, sauf `third_party/` (licences propres : vasm redistribué non modifié,
+usage non commercial ; voir `third_party/README.md`). English version: [`README.md`](README.md).

@@ -43,8 +43,9 @@ cp /path/to/your/ROMs/*.img tos/        # TOS ROMs supplied by the user (never i
 sh scripts/smoke-test.sh                # proves the chain: vasm -> Hatari -> TOS 1.04/1.62/2.06/4.04
 ```
 
-- If the workspace network is restricted (allowlist: package repositories, GitHub), the user
-  attaches `vasm.tar.gz` to the conversation; `get-vasm.sh` builds it.
+- If the workspace network is restricted (allowlist: package repositories, GitHub),
+  `get-vasm.sh` falls back to `third_party/vasm/vasm.tar.gz` (vasm 2.0f, unmodified, its own
+  non-commercial licence); a newer `vasm.tar.gz` can still be attached and passed as argument.
 - Expected ROMs: **1.04 → STF**, **1.62 → STE**, **2.06 → Mega STE**, **4.04 → Falcon**.
 - No ROM available: EmuTOS 1.3 in Hatari (`docs/04`), never the US image for timing, and
   report "verified with EmuTOS".

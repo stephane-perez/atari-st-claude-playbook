@@ -34,4 +34,5 @@ example run under the four TOS versions. **Not verified on a real machine.**
 ROMs, games, disassemblies of commercial programs, protection circumventions
 (see `docs/08-law-and-publication.md`). Tools from past projects are not included.
 
-License: MIT.
+License: MIT, except `third_party/` (own licences: vasm is redistributed unmodified,
+non-commercial use; see `third_party/README.md`).

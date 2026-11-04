@@ -46,6 +46,10 @@ git log --all --name-only --format= | sort -u     # no original file must appear
 The repository is under the MIT licence (see `LICENSE`): this covers **your** files, not those
 of third parties that you might put in by mistake.
 
+Exception, deliberate and documented: `third_party/` holds files redistributed under their own
+licence (currently the unmodified vasm source archive, non-commercial use). Each sub-folder
+states the licence and the SHA-256 of the original; such a file is never modified in place.
+
 ## Reminder for Claude
 
 Do not include in a public repository or delivery archive: ROMs, games, disassemblies of

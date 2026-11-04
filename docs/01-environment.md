@@ -25,7 +25,7 @@ sh scripts/setup-dev.sh vasm.tar.gz     # same, with a local vasm archive
 The script does, in this order: `apt-get update` (**mandatory**), installs
 `hatari xvfb xdotool mtools dosfstools build-essential python3-pip`, then
 `pip install pillow capstone unicorn` (with `--break-system-packages` if pip demands it),
-then builds vasm into `.tools/vasm/`.
+then builds vasm into `.tools/vasm/` (download, otherwise `third_party/vasm/vasm.tar.gz`).
 
 ### Why `apt-get update` is mandatory
 
@@ -41,7 +41,11 @@ In this project's claude.ai sessions the shell goes through an allowlist: packag
 (apt, PyPI, npm) and GitHub work; most other sites (curl, wget, Python requests) are refused.
 Practical consequences:
 
-- vasm: if `sun.hasenbraten.de` is unreachable, attach `vasm.tar.gz` to the conversation.
+- vasm: if `sun.hasenbraten.de` is unreachable, `get-vasm.sh` builds the archive shipped in
+  `third_party/vasm/` (vasm 2.0f, unmodified, SHA-256 checked; licence in its README:
+  redistribution unmodified, non-commercial use). For a newer version, attach `vasm.tar.gz`
+  and pass it as argument. Verified in a cloud session in Nov 2026 (download refused, the
+  shipped archive built `vasmm68k_mot` 2.0f).
 - The web-reading tools (search, WebFetch) are separate and respect `robots.txt`: a site that
   forbids it cannot be fetched by Claude. Then write a script the user runs on their machine.
 - Do not retry the same request with another command: every path goes through the same
