@@ -37,11 +37,22 @@ signatures (`ICE!`, `ATM5`…). Real cases:
 ## 2. Unpack
 
 - **Pack-Ice**: the stub's depacker is short; transcribe it faithfully into Python.
-  `tools/unice.py` handles version 2.3x (`Ice!`, lower case): verified byte for byte against
-  a game's own depacker run in Unicorn (47 files), plus a mutation test. Version 2.40
-  (`ICE!`) differs (byte-wide bit buffer, other tables) and is refused. A game may transform
-  the data again after depacking (one kept its pictures bit-transposed): look at the result
-  (round trip to PNG) before concluding.
+  `tools/unice.py` handles 2.3x (`Ice!`) and 2.40 (`ICE!`). They differ (bit buffer of a
+  long word vs a byte, distance tables, picture pass), and a lower-case header does not prove
+  the version: the 47 `Ice!` files of one game all fail when decoded as 2.40 (some
+  depackers, such as unice68 according to its source, accept both headers with the 2.40
+  algorithm). Verification:
+  - 2.3x: byte for byte against the game's own depacker run in Unicorn (47 files);
+  - both: `tools/unice_fuzz.py`, differential fuzzing against a 68000 routine run in
+    Unicorn (the game's for 2.3x, the published PACK-ICE 2.40 source re-typed and assembled
+    with vasm for 2.40), with VALID random streams covering every path: several thousand
+    cases, 0 difference; 6 deliberate mutations detected. No real `ICE!` file was available:
+    confirm on one when you have it.
+  - Curiosity of the published 2.40 routine: `move.w #$0F9F,d7` overwrites the bit buffer
+    just before reading the picture-pass block count, so that count always starts with the
+    bits `001111` (at least 15,361 blocks, 122 KB). `unice.py` reproduces it as is.
+  A game may transform the data again after depacking (one kept its pictures
+  bit-transposed): look at the result (round trip to PNG) before concluding.
 - **Atomik (ATM5)**: rather than transcribing, emulate the stub with Unicorn and hook the
   final copy, then take the unpacked image.
 - Always **verify**: expected size (given in the packed header), and that the result looks like

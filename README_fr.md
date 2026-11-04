@@ -10,7 +10,7 @@ binaires Atari ST/STE/Mega STE/Falcon et de les tester, avec Claude : méthode, 
   clavier), `mkst.py` (images FAT12), `prg_info.py` (inspecteur de PRG), `emu_snippets.py`
   (Capstone/Unicorn), `txt2st.py` (textes dans le jeu de caractères du ST), `packiff.py`
   (IFF ILBM recompressées en ByteRun1), `stx.py` (lecteur Pasti .STX), `unice.py`
-  (décompresseur Pack-Ice 2.3x).
+  (décompresseur Pack-Ice 2.3x/2.40) et `unice_fuzz.py` (son test différentiel).
 - **`scripts/`** : installation, vasm, test de bout en bout.
 - **`examples/hello`** : exemple original minimal.
 

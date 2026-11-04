@@ -64,7 +64,7 @@ sh scripts/smoke-test.sh                # proves the chain: vasm -> Hatari -> TO
 | Texts for the Atari | `tools/txt2st.py` | UTF-8 → ST character set, CR LF, 78 columns |
 | IFF pictures | `tools/packiff.py` | ByteRun1 repacking (memory saving) |
 | Pasti floppy image (.STX) | `tools/stx.py` | tracks, protection marks (CRC, timing), flat sector image |
-| Pack-Ice 2.3x (`Ice!`) | `tools/unice.py` | depack one file or `--scan` a dump/image (docs/03) |
+| Pack-Ice 2.3x / 2.40 (`Ice!`/`ICE!`) | `tools/unice.py` | depack one file or `--scan` a dump/image; `unice_fuzz.py` to verify (docs/03) |
 | Pack / unpack a PRG | `upx` (`upx-ucl`) | `atari/tos` format; only with the user's agreement (docs/03) |
 | Files on SD card / DOS partition | `mtools` | `mcopy -bspm`, `MTOOLS_SKIP_CHECK=1` |
 
