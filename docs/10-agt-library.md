@@ -16,10 +16,13 @@ sound and music, an asset pipeline on the host.
 
 | Point | State |
 |---|---|
-| Layout, build system, API, asset pipeline | read from the sources (static analysis) |
-| Building a library or an example | **not done**: no `m68k-atari-mint` cross-compiler could be installed in the analysis workspace (see "Toolchain") |
-| Running an example in Hatari | **not done** (nothing built) |
-| Real machine | **not done** |
+| Layout, build system, API | read from the sources |
+| Cross toolchain built from `vinriviere/cross-mint-ubuntu` (Ubuntu 24.04 host) | **verified** (2026-11) |
+| `agtcut` asset cutting of `examples/sprtest` (prebuilt Linux x86_64 tools) | **verified** |
+| `examples/hiworld` built and run | **verified in Hatari** (STE, TOS 1.62): text and the 20 pseudo-random values match a host recomputation |
+| `examples/sprtest` built and run from a floppy image | **verified in Hatari** (STE, TOS 1.62, 1 MB): assets load, hardware claimed, help screen, the four sprite types drawn |
+| Other examples, demos, STF / Mega STE / Falcon | not tried |
+| Real machine | not tried |
 
 Everything below marked *(hypothesis)* comes from reading the code and has not been checked
 by a build or a run.
@@ -54,30 +57,94 @@ AGT does **not** use vasm. It needs:
 
 On Ubuntu the usual route is Vincent Rivière's PPA (`ppa:vriviere/ppa`, packages
 `cross-mint-essential` or `gcc-m68k-atari-mint` + `binutils-m68k-atari-mint` +
-`mintlib-m68k-atari-mint`).
+`mintlib-m68k-atari-mint`). The packages install into `/usr` (not `/opt/cross-mint`).
 
 **Restricted network.** In a Claude workspace with an allowlist, it was observed (2026-11) that
 `ppa.launchpadcontent.net`, `launchpadlibrarian.net`, `api.launchpad.net`,
-`tho-otto.de` and `vincent.riviere.free.fr` are refused, while `launchpad.net` answers. The
-`.deb` files therefore cannot be fetched: the user must attach them (or a toolchain archive)
-to the conversation, as for vasm. Running the prebuilt binaries of `bin/` may also require
-the user's explicit agreement (they are executables from an external archive).
+`tho-otto.de` and `vincent.riviere.free.fr` are refused, while `launchpad.net` and GitHub
+answer. Three ways out: allow the two Launchpad hosts in the environment's network settings,
+attach the `.deb` files to the conversation, or build them from GitHub as below. Running the
+prebuilt binaries of `bin/` and building external code need the user's explicit agreement.
+
+### Building the `.deb` files from GitHub (verified, ≈ 30 min on 4 cores)
+
+`https://github.com/vinriviere/cross-mint-ubuntu` holds the Debian source packages that feed
+the PPA (upstream tarballs + MiNT patches + `debian/`). GCC and MiNTlib depend on each other,
+so a temporary C-only GCC ("stage 1") is built first:
+
+```sh
+apt-get install -y devscripts debhelper fakeroot texinfo bison flex libfl-dev gettext \
+    autoconf bzip2 xz-utils libgmp-dev libmpfr-dev libmpc-dev g++ make rsync
+git clone --depth 1 https://github.com/vinriviere/cross-mint-ubuntu cmu
+(cd cmu/binutils-m68k-atari-mint && dpkg-buildpackage -b -us -uc -j4)
+dpkg -i cmu/binutils-m68k-atari-mint_*.deb
+(cd cmu/mintbin-m68k-atari-mint && dpkg-buildpackage -b -us -uc -d)
+
+# stage 1: C only, no headers, private prefix
+TOP=$PWD; S=$TOP/stage1; mkdir -p $S/src $S/build && cd $S/src
+tar xf ../../cmu/gcc-m68k-atari-mint/gcc-4.6.4.tar.xz && cd gcc-4.6.4
+xzcat ../../../cmu/gcc-m68k-atari-mint/gcc-4.6.4-mint-*.patch.xz | patch -p1
+cd $S/build && ../src/gcc-4.6.4/configure --prefix=$S/install --target=m68k-atari-mint \
+    --disable-nls --enable-languages=c --without-headers --disable-libssp \
+    --disable-threads --disable-shared
+make -j4 all-gcc all-target-libgcc && make install-gcc install-target-libgcc
+# stage 1 must see the MiNT binutils and (later) the MiNTlib headers:
+mkdir -p $S/install/m68k-atari-mint/bin
+for t in as ld ar nm ranlib objcopy objdump strip; do
+  ln -sf /usr/bin/m68k-atari-mint-$t $S/install/m68k-atari-mint/bin/$t; done
+ln -sfn /usr/m68k-atari-mint/include $S/install/m68k-atari-mint/include
+ln -sfn /usr/m68k-atari-mint/lib     $S/install/m68k-atari-mint/lib
+cd $TOP
+
+(cd cmu/mintlib-m68k-atari-mint && PATH=$S/install/bin:$PATH dpkg-buildpackage -b -us -uc -d -j4)
+dpkg -i cmu/mintlib-*.deb cmu/mintbin-*.deb
+(cd cmu/pml-m68k-atari-mint && PATH=$S/install/bin:$PATH dpkg-buildpackage -b -us -uc -d -j4)
+dpkg -i cmu/pml-*.deb
+(cd cmu/gcc-m68k-atari-mint && dpkg-buildpackage -b -us -uc -j4)    # the real C/C++ compiler
+dpkg -i cmu/gcc-m68k-atari-mint_*.deb
+m68k-atari-mint-g++ --version     # GCC 4.6.4 (MiNT 20251014)
+```
+
+Failures met on the way: without the `bin/` links, stage 1 calls the host `as`
+(`unrecognized option '-m68000'`); without the `include` link, PML stops on `stdio.h`.
+Keep the five `.deb` files: in a later session `dpkg -i *.deb` is enough.
 
 ## Building
 
+Verified recipe with the Debian packages above (Ubuntu 24.04 host):
+
 ```sh
-export AGTROOT=/path/to/agtools            # optional: examples default to ../..
-export PATH=/opt/cross-mint/bin:$PATH      # m68k-atari-mint-gcc must answer
-m68k-atari-mint-gcc --version              # check first
-cd $AGTROOT/examples/hiworld && make       # builds build/hiworld.prg -> disk1/auto/
-cd $AGTROOT/examples/sprtest && make assets && make
+ln -sfn /long/path/to/agtools /tmp/agt     # SHORT path: rmac crashes on long -I paths
+export AGTROOT=/tmp/agt                    # must be exported (assets_com.sh bug, see below)
+cat > /tmp/mint-ar <<'EOF'
+#!/bin/sh
+# MiNT ar with the a.out target forced (host LTO plugins hide rmac symbols)
+op=$1; shift
+exec m68k-atari-mint-ar --target=a.out-zero-big -$op "$@"
+EOF
+chmod +x /tmp/mint-ar
+MK="make -j4 TOOLCHAIN_INSTALL=/usr AR=/tmp/mint-ar"
+cd $AGTROOT/examples/hiworld && $MK        # build/hiworld.prg, build/mchdet.prg -> disk1/, disk2/
+cd $AGTROOT/examples/sprtest && bash assets_com.sh && $MK   # assets (≈ 40 s), then disk1/
 ```
+
+- `TOOLCHAIN_INSTALL=/usr`: `makedefs.mintgcc` expects `/opt/cross-mint`, the packages
+  install into `/usr`.
+- `AR=…/mint-ar`: on a host with `/usr/lib/bfd-plugins/` (LLVM gold, GCC LTO plugins), the MiNT
+  `ar`/`nm` see **no symbols** in the a.out objects written by rmac; the archive index of
+  `aglib_ste.a` then lacks `_SYS_Claim`, `_qmemclr`, `_bSTE`… and the link fails with
+  "undefined reference" (also to `___mulsi3`, a consequence). Forcing `a.out-zero-big` fixes it.
+  `m68k-atari-mint-nm --target=a.out-zero-big x.o` shows the symbols.
+- rmac (`bin/Linux/x86_64/rmac`) segfaults when an include path is long (≈ 140 characters
+  crashed, a short absolute path works): keep `AGTROOT` short.
+- `copyassets.sh` uses `rsync` (install it).
 
 - Each project `Makefile` sets `PROJECT`, `BUILD_CFG` (`debug` / `testing` / `release`),
   `AGLIB=$(AGLIB_STE)`, the project sources and assets, then includes
   `$(AGTROOT)/makedefs` and `$(AGTROOT)/makerules`.
 - The library (`build/aglib_ste.a`) is rebuilt **inside each project** from the AGT sources.
-- Output: `build/<name>.tos`, copied to `<name>.prg`, then to `disk1/auto/` with the assets.
+- Output: `build/<name>.prg` (linked as `.tos`, renamed by a `%.prg: %.tos` rule), copied to
+  `disk1/auto/` with the assets.
   `make images` calls `scripts/post_image.sh`, which is an empty stub: use `tools/mkst.py`
   from this repository to make a floppy image.
 - Useful `Makefile` switches: `USE_HATARI_NATFEATS=yes` (console output to Hatari),
@@ -146,12 +213,17 @@ Each example has an `assets_com.sh`, run by `make assets`; it calls `agtcut` fro
 | `imspr` | `.sps` | sprites drawn by a generic routine (with mask; `-nogm` for STF) |
 | `emspr` | `.ems` | sprites with generated code (less memory) |
 | `emxspr` | `.emx` | generated code, most optimised (`-emxopt`, slow to cut; uses rmac) |
+| `emhspr` | `.emh` | generated-code variant used by `sprtest` (works, but missing from `agtcut -h`) |
 | `slabs` / `slabrestore` | `.sls` / `.slr` | large blocks drawn and restored without masking |
 
 - Common options: `-s source.png`, `-o out`, `-p palette` (`.pi1`, `.ccs`, `.png`),
   `-keyrgb ff:00:ff` (transparent colour), `-crn 224` (renormalise RGB stretched to 255),
   `-bp 4`, cutting by grid (`-sxs -sys -sc`), by crosshair (`-ackeyrgb`) or by a guide file
-  (`-sg x.sgd`). The full guide is `tools/agtcut/usage.txt` in the AGT tree.
+  (`-sg x.sgd`). The full guide is `tools/agtcut/usage.txt` in the AGT tree; it documents
+  v0.41 while the prebuilt binary is v0.475b: `agtcut -h` is the reference.
+- `assets_com.sh` tests `"${AGTROOT}+x" = "x"`, which is never true: when `AGTROOT` is
+  unset it stays empty (instead of `../..`) and the script fails on `/config.sh`.
+  Always `export AGTROOT`.
 - Packing: `scripts/pack.sh <file> <mode>` with `wrap`, `lz77` (fastest), `lzs1`,
   `lzs2`/`lzsa` (best balance), `zx0`, `pk2e`/`arj4`/`arj7` (Windows only).
   The unpacker for a mode is only linked in if the project defines it:
@@ -160,14 +232,20 @@ Each example has an `assets_com.sh`, run by `make assets`; it calls `agtcut` fro
 
 ## Using it with this playbook
 
+Verified with `examples/sprtest`:
+
 ```sh
-python3 tools/mkst.py out/agt.st AGT examples/sprtest/disk1/auto/sprtest.prg:AUTO/SPRTEST.PRG \
-    examples/sprtest/disk1/<asset>:<ASSET>          # one source:DEST per file of disk1/ (8.3 names)
-python3 tools/hatari_run.py --disk out/agt.st --tos tos/TOS162.IMG --machine ste --mem 1024 --out out/agt 20 30
+D=$AGTROOT/examples/sprtest/disk1
+python3 tools/mkst.py out/sprtest.st SPRTEST $D/auto/sprtest.prg:AUTO/SPRTEST.PRG \
+    $D/bg.ccm:BG.CCM $D/bg.cct:BG.CCT $D/1ems.ems:1EMS.EMS $D/2emx.emx:2EMX.EMX \
+    $D/3emh.emh:3EMH.EMH $D/4slab.slr:4SLAB.SLR $D/4slab.sls:4SLAB.SLS
+python3 tools/hatari_run.py --disk out/sprtest.st --tos tos/TOS162.IMG --machine ste --mem 1024 \
+    --out out/sprtest --key space@45 --key 1@52 --key 2@53 --key 3@54 --key 4@55 40 58 64
 ```
 
-- Or start the program directly: `--prg build/sprtest.prg --hd-files assets/...:...`
-  (assets must sit next to the program, as the `disk1/` folder shows).
+- Loading from the emulated floppy is slow: "ready... (press key)" appeared between 32 s and
+  40 s; a key sent at 22 s was lost. Take a screenshot before sending the key.
+- Simple programs that load nothing (`hiworld`) can be started with `--prg`.
 - STE first (TOS 1.62), then Mega STE (2.06) and Falcon (4.04): AGT targets the STE.
 - `USE_HATARI_NATFEATS=yes` sends `printf` output to Hatari's console; with
   `USE_HATARI_DEBUGGING=yes` load the `.sym` file in the debugger (`symbols prog.sym`).
@@ -192,4 +270,7 @@ python3 tools/hatari_run.py --disk out/agt.st --tos tos/TOS162.IMG --machine ste
 6. A tutorial buffer declared as a global array may end up in TT-RAM on a TT/Falcon with
    fast RAM (warning in `tutor1`): screen memory must be ST-RAM (`Mxalloc(…, 0)`).
 7. The Linux prebuilt binaries may lack shared libraries (`config.sh` warns about it);
-   in that case rebuild the tools from `tools/` with the host GCC.
+   in that case rebuild the tools from `tools/` with the host GCC. On Ubuntu 24.04 x86_64
+   all seven (`rmac`, `agtcut`, `pcs2agi`, `packwrap`, `lz77`, `lzsa`, `zx0`) ran as is.
+8. The executables are linked with PRG flags `$7` (fastload + load and malloc in TT-RAM)
+   (seen with `tools/prg_info.py` on `hiworld.prg`); screen buffers must still be ST-RAM.
