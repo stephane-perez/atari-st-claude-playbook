@@ -37,6 +37,11 @@ signatures (`ICE!`, `ATM5`…). Real cases:
 ## 2. Unpack
 
 - **Pack-Ice**: the stub's depacker is short; transcribe it faithfully into Python.
+  `tools/unice.py` handles version 2.3x (`Ice!`, lower case): verified byte for byte against
+  a game's own depacker run in Unicorn (47 files), plus a mutation test. Version 2.40
+  (`ICE!`) differs (byte-wide bit buffer, other tables) and is refused. A game may transform
+  the data again after depacking (one kept its pictures bit-transposed): look at the result
+  (round trip to PNG) before concluding.
 - **Atomik (ATM5)**: rather than transcribing, emulate the stub with Unicorn and hook the
   final copy, then take the unpacked image.
 - Always **verify**: expected size (given in the packed header), and that the result looks like
@@ -47,6 +52,27 @@ signatures (`ICE!`, `ATM5`…). Real cases:
   intro of 196 KB went down to 76 KB, about 39 %). Packing saves floppy space, not memory: the
   program is unpacked in place, at its full size. Pack only once the user has agreed (on one
   project the author chose to leave the game uncompressed and keep UPX for the intro).
+
+## 2b. Floppies without files (track loaders)
+
+Many games have no usable directory: an executable boot sector (word checksum `$1234`)
+loads a second stage that drives the WD1772 directly and reads files from its own table.
+Method that worked (`.STX` image of a 1992 game):
+
+1. `tools/stx.py IMAGE.stx` : geometry, sector order, **protection marks** (a sector with a
+   CRC error and a timing record = key sector, for example Copylock ST). Describe them,
+   never circumvent them (`docs/08`).
+2. `tools/stx.py IMAGE.stx --dump flat.st`, then disassemble the boot sector from `$1E`
+   (bra `$601E`): it says which logical sectors it reads and in which order (cylinder,
+   side, sector), which is also the addressing of the file table.
+3. Find the file table (often a sector read by the second stage; it may be **filled at run
+   time**: empty in the loader's source, present elsewhere on the disk).
+4. **Confirm with Hatari**, which reads `.STX` directly: `--extra "--trace fdc"`, keep the
+   `type II read sector` lines (track, side, sector, DMA address, pc) and map them to the
+   table. This shows the real loading order and the memory configuration effects (one game
+   preloaded all its files with 1 MB, loaded them on demand with 512 KB).
+5. Entropy per track gives a quick map: packed data near 7.7 bits/byte, formatted but unused
+   tracks are a repeated pattern (`$6DB6`, `$E5`).
 
 ## 3. Recursive disassembly
 

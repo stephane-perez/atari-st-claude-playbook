@@ -10,7 +10,7 @@ disassemble Atari ST/STE/Mega STE/Falcon binaries and test them: method, tools, 
 - **`tools/`**: `hatari_run.py` (headless Hatari), `hatari-joysticks.cfg` (joysticks on the
   keyboard), `mkst.py` (FAT12 images), `prg_info.py` (PRG inspector), `emu_snippets.py`
   (Capstone/Unicorn), `txt2st.py` (texts in the ST character set), `packiff.py` (IFF ILBM
-  repacked with ByteRun1).
+  repacked with ByteRun1), `stx.py` (Pasti .STX reader), `unice.py` (Pack-Ice 2.3x depacker).
 - **`scripts/`**: installation, vasm, end-to-end test.
 - **`examples/hello`**: minimal original example.
 

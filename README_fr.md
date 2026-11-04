@@ -9,7 +9,8 @@ binaires Atari ST/STE/Mega STE/Falcon et de les tester, avec Claude : méthode, 
 - **`tools/`** : `hatari_run.py` (Hatari sans écran), `hatari-joysticks.cfg` (joysticks au
   clavier), `mkst.py` (images FAT12), `prg_info.py` (inspecteur de PRG), `emu_snippets.py`
   (Capstone/Unicorn), `txt2st.py` (textes dans le jeu de caractères du ST), `packiff.py`
-  (IFF ILBM recompressées en ByteRun1).
+  (IFF ILBM recompressées en ByteRun1), `stx.py` (lecteur Pasti .STX), `unice.py`
+  (décompresseur Pack-Ice 2.3x).
 - **`scripts/`** : installation, vasm, test de bout en bout.
 - **`examples/hello`** : exemple original minimal.
 

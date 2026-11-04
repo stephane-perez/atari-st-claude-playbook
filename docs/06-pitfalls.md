@@ -104,6 +104,10 @@ Each entry: symptom → cause → remedy. Grouped by area.
 | Symptom | Cause | Remedy |
 |---|---|---|
 | "Floppy image" that is not one | packed PRG (Pack-Ice, Atomik) | `prg_info.py` |
+| Game floppy shows an empty directory or a bogus BPB | track loader, no files | `tools/stx.py --dump`, boot sector, file table, `--trace fdc` (docs/03 §2b) |
+| Depacked picture garbled although the depacker is verified | the game transforms the data again (bit transposition) | find the routine that uses the data, compare with a Hatari screenshot |
+| File table of a loader full of zeros | filled at run time from another sector | trace the FDC reads in Hatari |
+| A TOS ROM file of 262,145 bytes | one extra trailing byte | keep the first 256 KB (check the header: `$602E`, version, base) |
 | mtools: hidden sectors warning | Atari partition | `MTOOLS_SKIP_CHECK=1` |
 | `mtools` does not copy as is | text vs binary | `mcopy -bspm` |
 | Text file unreadable on the Atari | UTF-8 accents | plain ASCII for `TO_TEST.TXT`, or `tools/txt2st.py` |
