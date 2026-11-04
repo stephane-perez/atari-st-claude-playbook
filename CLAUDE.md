@@ -31,6 +31,9 @@ Everything written here was met in real work; the pitfalls are not theoretical.
 9. **Test with the real assembler and the real emulator**, not only with a home-made test
    bench. A simulator written by Claude (CPU, coprocessor…) is for finding bugs before a
    hardware trial, never for guaranteeing the result.
+10. **Do not name new projects in `docs/07`.** Case studies added from now on describe the
+    game or program by its genre and technique only (e.g. "Platform game"), never by its
+    title or the project's name. Existing entries are kept as they are.
 
 ## Setup (≈ 5 minutes)
 
@@ -121,3 +124,4 @@ Full catalogue: `docs/06-pitfalls.md`.
 | `docs/07-case-studies.md` | Projects carried out and lessons from each |
 | `docs/08-law-and-publication.md` | What to publish, what not to publish |
 | `docs/09-working-with-claude.md` | Way of collaborating, sessions, resuming, request templates |
+| `docs/10-agt-library.md` | AGT (Atari Game Tools, STE game framework): toolchain, build, API, assets — not in the repo |
