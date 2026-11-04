@@ -62,6 +62,7 @@ sh scripts/smoke-test.sh                # proves the chain: vasm -> Hatari -> TO
 | Inspect a PRG | `tools/prg_info.py` | header, relocations, packer signatures |
 | Disassemble / emulate the CPU | Capstone, Unicorn | `tools/emu_snippets.py` (tested templates) |
 | Recursive disassembly | `tools/m68k_recdis.py` | flow-following study listing, labels file, `--pointer-scan` (docs/03) |
+| Identical source | `tools/m68k_mksrc.py` | raw image -> vasm source, checked byte for byte with `--check` (docs/03) |
 | Test without a screen | `tools/hatari_run.py` | Xvfb + xdotool, screenshots, keys (docs/04) |
 | Simulate joysticks | `tools/hatari-joysticks.cfg` | all 6 joysticks on the keyboard, `--down`/`--up` (docs/04) |
 | Floppy image | `tools/mkst.py` | dependency-free FAT12 720/820 KB, reproducible |

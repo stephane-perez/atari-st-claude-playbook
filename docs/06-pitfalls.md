@@ -117,6 +117,8 @@ Each entry: symptom → cause → remedy. Grouped by area.
 | Depacked picture garbled although the depacker is verified | the game transforms the data again (bit transposition) | find the routine that uses the data, compare with a Hatari screenshot |
 | Pack-Ice file decoded as garbage or error | 2.3x and 2.40 differ; `Ice!` vs `ICE!` header, some depackers treat both as 2.40 | `unice.py --variant 2.3/2.4` |
 | Rebuilt level colours wrong, pictures right | tile-set palette stored as linear 0..15 values, not in the STE order | compare index -> colour with a Hatari screenshot |
+| Label of a `movem.l d16(pc)` table 2 bytes off | Capstone prints the target from the register mask | `fix_capstone()` in `m68k_recdis.py` |
+| Data table of a labels file disassembled as code | every name taken as a code entry | prefix data names `tbl_`, `var_`, `data_`, `str_` |
 | Recursive disassembly finds "code" in data | pointer scan on a table of values | reject candidates starting with `ori` (`$00xx`), check by eye |
 | File table of a loader full of zeros | filled at run time from another sector | trace the FDC reads in Hatari |
 | A TOS ROM file of 262,145 bytes | one extra trailing byte | keep the first 256 KB (check the header: `$602E`, version, base) |

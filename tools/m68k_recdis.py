@@ -6,7 +6,8 @@ usage: m68k_recdis.py IMAGE LOAD_ADDR OUT.lst [--entry ADDR ...] [--labels FILE]
                       [--stats]
   IMAGE      raw bytes loaded at LOAD_ADDR (no header)
   --entry    extra code entry points (hex accepted: 0x...); LOAD_ADDR is one
-  --labels   file of "ADDRESS NAME [comment]" lines (# comments allowed)
+  --labels   file of "ADDRESS NAME [comment]" lines (# comments allowed); names
+             starting with tbl_, var_, data_ or str_ are data, the others code entries
 
 Code is found by following the flow from the entry points: bra/bsr/Bcc/DBcc,
 jsr/jmp to absolute or pc-relative targets, and addresses stored into the
@@ -64,6 +65,7 @@ class Disasm:
                 if i is None or a & 1:
                     break
                 m, ops = i.mnemonic, i.op_str
+                ops = fix_capstone(m, ops)
                 self.ins[a] = (i.size, m, ops)
                 tgt = self.target(i)
                 if tgt is not None and self.inside(tgt):
@@ -178,6 +180,23 @@ class Disasm:
         return None
 
 
+DATA_PREFIXES = ("tbl_", "var_", "data_", "str_")
+
+
+def code_names(names):
+    """names of the labels file that are code entry points (not data)"""
+    return [a for a, n in names.items() if not n.startswith(DATA_PREFIXES)]
+
+
+def fix_capstone(m, ops):
+    """Capstone (5.x) prints the target of movem d16(pc) relative to the address of
+    the register mask instead of the displacement word: 2 bytes too low. The
+    encoding is right, only the printed address is wrong (checked against vasm)."""
+    if m.startswith("movem") and "(pc)" in ops:
+        ops = re.sub(r"\$([0-9a-f]+)\(pc\)", lambda mm: "$%x(pc)" % (int(mm.group(1), 16) + 2), ops)
+    return ops
+
+
 def load_labels(path):
     names, comments = {}, {}
     if not path:
@@ -263,7 +282,7 @@ def main():
     data = open(a.image, "rb").read()
     names, comments = load_labels(a.labels)
     dis = Disasm(data, a.load)
-    dis.run([a.load] + a.entry + [x for x in names if x not in a.entry])
+    dis.run([a.load] + a.entry + [x for x in code_names(names) if x not in a.entry])
     if a.pointer_scan:
         print("pointer scan: %d entry points added" % dis.pointer_scan())
     write(dis, a.out, names, comments)
