@@ -71,6 +71,7 @@ sh scripts/smoke-test.sh                # proves the chain: vasm -> Hatari -> TO
 | PI1 pictures | `tools/pi1png.py` | PI1 <-> indexed PNG, exact round trip |
 | Music (YM) | `tools/ym_emu.py`, `sndh_wrap.py`, `sndh_record.py` | run a player in Unicorn, wrap it as SNDH, record it in Hatari + check (docs/03, docs/04) |
 | Pasti floppy image (.STX) | `tools/stx.py` | tracks, protection marks (CRC, timing), flat sector image |
+| C/C++ cross compiler (AGT) | `scripts/get-cross-mint.sh` | m68k-atari-mint GCC 4.6.4 built from GitHub or kept `.deb`; `tools/mint-ar` for AGT (docs/10) |
 | Pack-Ice 2.3x / 2.40 (`Ice!`/`ICE!`) | `tools/unice.py` | depack one file or `--scan` a dump/image; `unice_fuzz.py` to verify (docs/03) |
 | Pack / unpack a PRG | `upx` (`upx-ucl`) | `atari/tos` format; only with the user's agreement (docs/03) |
 | Files on SD card / DOS partition | `mtools` | `mcopy -bspm`, `MTOOLS_SKIP_CHECK=1` |

@@ -1,0 +1,8 @@
+#!/bin/sh
+# mint-ar: m68k-atari-mint-ar with the a.out target forced.
+# On hosts with /usr/lib/bfd-plugins/ (LLVM gold, GCC LTO), the MiNT ar/nm see no
+# symbols in the a.out objects written by rmac, so the archive index is incomplete
+# and the link fails ("undefined reference"). Used for AGT: make AR=/path/to/mint-ar
+# (docs/10). Takes the same arguments as ar ("cr lib.a objs...").
+op=$1; shift
+exec m68k-atari-mint-ar --target=a.out-zero-big -"$op" "$@"
