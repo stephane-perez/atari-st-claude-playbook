@@ -140,3 +140,14 @@ Each entry: symptom → cause → remedy. Grouped by area.
 | Fixing what you cannot reproduce | the fix may target the wrong cause | reproduce in Hatari first; if it does not reproduce, say so and ask for exact steps |
 | Guessing the cause of a hardware-only fault | trials wasted | diagnostic variants, then measurement |
 | Checksums computed without the original input | they may be wrong | label them "to re-check" and re-check as soon as the original is available |
+
+## Hard disk, ACSI DMA, streaming (docs/11)
+
+| Symptom | Cause | Remedy |
+|---|---|---|
+| Frame lost at every `Fread` of a few KB from an ACSI/UltraSatan disk | the GEMDOS read blocks the CPU until the driver is done | raw non blocking ACSI DMA command (`examples/acsi-stream`), `Fread` as fallback |
+| Raw read path never activates | the file is fragmented (probe code −4) | copy it to an empty, freshly formatted partition |
+| Bus corruption / garbage after a GEMDOS call during streaming | a second user of `$FF8604/06` while a command is in flight | no disk access until the command has finished; `flock` set |
+| Hatari shows no gain from the DMA read | Hatari's ACSI disk is instantaneous | judge timing on the real machine only |
+| TOS does not mount the FAT16 test partition | clusters larger than 1 KB | `mkfs.fat -s 2` |
+| Music plays as loud distortion | 8-bit WAV is unsigned, the STE DMA wants signed | flip the sign once (`wav2sgn.py`) |

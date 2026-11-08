@@ -74,6 +74,8 @@ sh scripts/smoke-test.sh                # proves the chain: vasm -> Hatari -> TO
 | C/C++ cross compiler (AGT) | `scripts/get-cross-mint.sh` | m68k-atari-mint GCC 4.6.4 built from GitHub or kept `.deb`; `tools/mint-ar` for AGT (docs/10) |
 | Pack-Ice 2.3x / 2.40 (`Ice!`/`ICE!`) | `tools/unice.py` | depack one file or `--scan` a dump/image; `unice_fuzz.py` to verify (docs/03) |
 | Pack / unpack a PRG | `upx` (`upx-ucl`) | `atari/tos` format; only with the user's agreement (docs/03) |
+| Stream a sample from an ACSI disk without blocking | `examples/acsi-stream/` | non blocking ACSI DMA reads, automatic `Fread` fallback (docs/11) |
+| Hatari ACSI hard-disk image + bench | `tools/mkacsi.py`, `tools/acsi_bench.py` | MBR + FAT16 1 KB clusters; counters through the control socket (docs/11) |
 | Files on SD card / DOS partition | `mtools` | `mcopy -bspm`, `MTOOLS_SKIP_CHECK=1` |
 
 ## Typical workflows
@@ -126,3 +128,4 @@ Full catalogue: `docs/06-pitfalls.md`.
 | `docs/08-law-and-publication.md` | What to publish, what not to publish |
 | `docs/09-working-with-claude.md` | Way of collaborating, sessions, resuming, request templates |
 | `docs/10-agt-library.md` | AGT (Atari Game Tools, STE game framework): toolchain, build, API, assets — not in the repo |
+| `docs/11-acsi-streaming.md` | Non blocking ACSI DMA reads, music streamed from disk, Hatari ACSI bench; what is verified on hardware |

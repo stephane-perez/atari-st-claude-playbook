@@ -122,3 +122,19 @@ property of their authors and publishers.
   game); a home-made emulation (Unicorn) is only trusted once it matches Hatari; re-test a
   tool after every change, even a "small" one (a comparison rewrite fell from 100 % to 0.2 %
   before the alignment was fixed).
+
+## STE tech demo with music streamed from the hard disk — non blocking ACSI DMA
+
+- Goal: a 50 fps scrolling demo with sprites and a multi-minute stereo sample played from the
+  hard disk, without losing frames when the disk is accessed. Real machine: Mega STE, UltraSatan,
+  HDDRIVER.
+- Techniques: sound DMA ring buffer; hand-built ICD READ(10) / ACSI READ(6) commands on the
+  ACSI DMA chip; file located through a `hdv_rw` hook and PUN_INFO instead of a FAT parser;
+  probe with automatic fallback to `Fread`; Hatari bench with an emulated ACSI disk and
+  counters read through the control socket (`docs/11`).
+- Lessons: a version with `Fread` of adaptive size did not remove the lost frames; only the real machine showed the problem and later the fix (the user watched a CPU
+  meter, colour bars by raster line). Hatari validated the protocol and the data, never the
+  timing. Fragmentation of the file silently disabled the fast path until the disk was
+  defragmented, hence the reason codes. Packaging the code as a reusable library
+  (`examples/acsi-stream`) was requested after the result was confirmed.
+

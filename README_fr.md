@@ -17,6 +17,9 @@ binaires Atari ST/STE/Mega STE/Falcon et de les tester, avec Claude : méthode, 
 - **`scripts/`** : installation, vasm, test de bout en bout.
 - **`examples/hello`** : exemple original minimal.
 - **`examples/sndh/beep.s`** : un petit morceau SNDH original, entrée de test des outils musicaux.
+- **`examples/acsi-stream/`** : en-têtes C++ pour lire un sample depuis un disque dur ACSI par DMA
+  non bloquant (`docs/11`, en anglais) ; `tools/mkacsi.py` et `tools/acsi_bench.py` fabriquent et
+  utilisent une image de disque ACSI dans Hatari.
 
 ## Démarrage
 
