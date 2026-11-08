@@ -17,6 +17,9 @@ disassemble Atari ST/STE/Mega STE/Falcon binaries and test them: method, tools, 
 - **`scripts/`**: installation, vasm, end-to-end test.
 - **`examples/hello`**: minimal original example.
 - **`examples/sndh/beep.s`**: a tiny original SNDH tune, test input for the music tools.
+- **`examples/acsi-stream/`**: C++ headers to stream a sample from an ACSI hard disk with
+  non blocking DMA reads (`docs/11`); `tools/mkacsi.py` and `tools/acsi_bench.py` build and use
+  an ACSI disk image in Hatari.
 
 ## Getting started
 
