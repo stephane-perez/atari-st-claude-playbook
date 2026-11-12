@@ -71,6 +71,9 @@ Each entry: symptom → cause → remedy. Grouped by area.
 | Disk-write bug invisible in Hatari | the GEMDOS hard-disk emulation uses no BIOS buffers and no driver | boot from a floppy image; fake resident simulating the driver |
 | Parallel-port joysticks all "pressed" in Hatari | no joystick emulated on the parallel port: lines read 0 | normal; configure Joystick 4/5 |
 | PSG register value one step late in Hatari | Hatari returns the value as of the register select | select and read twice |
+| Hard-disk loader crashes on the real machine, not in Hatari | driver refuses a buffer above a faked `phystop` (HDDriver: `Fread` = -2), result unchecked | keep the real `phystop`, check every read; or preload the data (docs/12) |
+| Music stuck on one note during hard-disk loads | interrupts masked during the swap, player stopped | mute YM registers 8-10 around the read (docs/12) |
+| 2 bombs on reset after a hard-disk-loaded game (real STE only) | game overwrote system variables still marked valid | clear `memvalid`/`memval2`/`memval3`/`resvalid` before starting the game (docs/12) |
 
 ## Hardware
 

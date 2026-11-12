@@ -138,3 +138,17 @@ property of their authors and publishers.
   defragmented, hence the reason codes. Packaging the code as a reusable library
   (`examples/acsi-stream`) was requested after the result was confirmed.
 
+## Same action game — hard-disk adaptation for any driver (2026)
+
+- Goal: the published hard-disk adaptation of the game (2011, its own loader system) crashed
+  with the user's driver on real STE and Mega STE; make it work with any driver.
+- Techniques: the old loader system read and its LZ format re-implemented; a 186-byte
+  "preload everything in RAM" patch (4 MB machines); then a new launcher written in vasm on
+  the author's newer library (original driver in low RAM, real TOS, RAM swaps): game
+  sector-read routine redirected to the library, exit/state-save keys hooked at the end of
+  the game's IKBD interrupt, YM muted during loads, reset made a cold boot. Numbered
+  builds 0.0.1, 0.0.2.
+- Results: verified on a real STE 4 MB with HDDriver 12.53 (game, loads, save, restore, exit,
+  reset); Hatari STE/Mega STE 1-4 MB.
+- Lessons: the crash and the reset bug never showed in Hatari; a driver's behaviour can only
+  be judged on the machine. Details and the WHDLoad-like design: `docs/12`.
