@@ -62,6 +62,7 @@ sh scripts/smoke-test.sh                # proves the chain: vasm -> Hatari -> TO
 | Inspect a PRG | `tools/prg_info.py` | header, relocations, packer signatures |
 | Disassemble / emulate the CPU | Capstone, Unicorn | `tools/emu_snippets.py` (tested templates) |
 | Recursive disassembly | `tools/m68k_recdis.py` | flow-following study listing, labels file, `--pointer-scan` (docs/03) |
+| Identical source | `tools/m68k_mksrc.py` | raw image -> vasm source, checked byte for byte with `--check` (docs/03) |
 | Test without a screen | `tools/hatari_run.py` | Xvfb + xdotool, screenshots, keys (docs/04) |
 | Simulate joysticks | `tools/hatari-joysticks.cfg` | all 6 joysticks on the keyboard, `--down`/`--up` (docs/04) |
 | Floppy image | `tools/mkst.py` | dependency-free FAT12 720/820 KB, reproducible |
@@ -129,3 +130,4 @@ Full catalogue: `docs/06-pitfalls.md`.
 | `docs/09-working-with-claude.md` | Way of collaborating, sessions, resuming, request templates |
 | `docs/10-agt-library.md` | AGT (Atari Game Tools, STE game framework): toolchain, build, API, assets — not in the repo |
 | `docs/11-acsi-streaming.md` | Non blocking ACSI DMA reads, music streamed from disk, Hatari ACSI bench; what is verified on hardware |
+| `docs/12-hd-loaders.md` | Floppy games from hard disk: gamex, HAGA, HAG2 internals, porting a DFC game, driver compatibility, WHDLoad-like design |

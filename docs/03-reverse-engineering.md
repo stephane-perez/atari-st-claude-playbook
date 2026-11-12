@@ -115,7 +115,9 @@ Relocations are a major asset: every relocated long word is an address. What is 
 - 68020 addressing modes are accepted even in 68000 mode: filter them;
 - the "base displacement" classification may not match the 68000;
 - `movec` rejected (68010+ code);
-- a second disassembler (such as `rg-dis`) is used to cross-check doubtful cases.
+- a second disassembler (such as `rg-dis`) is used to cross-check doubtful cases;
+- `movem.l d16(pc),<list>`: Capstone 5 prints a target 2 bytes too low (it counts from the
+  register mask, not from the displacement word); `m68k_recdis.py` corrects it.
 
 ### Unicorn pitfalls
 
@@ -123,6 +125,18 @@ Set the CPU model **before** `mem_map`:
 `uc.ctl_set_cpu_model(UC_CPU_M68K_M68000)`. See `tools/emu_snippets.py` (tested).
 
 ## 4. Emit a source where every address is a label
+
+`tools/m68k_mksrc.py IMAGE LOAD_ADDR OUT.s --labels FILE --pointer-scan --check VASM` does
+it for a raw image (no PRG header): code found by `m68k_recdis.py` becomes instructions (each
+one checked against vasm, kept as `dc.w` with a comment when vasm would encode it
+differently), every branch target, pc-relative and absolute `.l` operand inside the image
+becomes a label, the rest is `dc.b`; `--check` reassembles with `-Fbin -no-opt` and compares.
+Spellings fixed on the way: absolute short addresses `>= $8000` written `$FFFFxxxx.w`, no size
+on `btst/bset/bclr/bchg`. On a 70 KB game program: identical at the first full run, 7
+instructions left as `dc.w` (data inside code). What it does **not** do: immediates and data
+tables holding addresses stay numbers, so the source is identical but not yet relocatable
+(shift test, section 6); until then, keep every change the same size or jump to new code
+outside the image.
 
 Every byte of the binary is either an instruction or data, and every reference target carries
 a label (`L_00001234`). Operands containing a relocated address are written **with the label**,
