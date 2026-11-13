@@ -11,12 +11,16 @@ binaires Atari ST/STE/Mega STE/Falcon et de les tester, avec Claude : méthode, 
   (Capstone/Unicorn), `txt2st.py` (textes dans le jeu de caractères du ST), `packiff.py`
   (IFF ILBM recompressées en ByteRun1), `stx.py` (lecteur Pasti .STX), `unice.py`
   (décompresseur Pack-Ice 2.3x/2.40) et `unice_fuzz.py` (son test différentiel),
-  `m68k_recdis.py` (désassembleur récursif), `pi1png.py` (PI1 <-> PNG), `ym_emu.py`,
+  `m68k_recdis.py` (désassembleur récursif), `m68k_mksrc.py` (source vasm identique
+  à partir d'une image brute), `pi1png.py` (PI1 <-> PNG), `ym_emu.py`,
   `sndh_wrap.py`, `sndh_record.py` et `sndhplay.s` (lecteurs de musique : émulation, SNDH,
   enregistrement dans Hatari).
 - **`scripts/`** : installation, vasm, test de bout en bout.
 - **`examples/hello`** : exemple original minimal.
 - **`examples/sndh/beep.s`** : un petit morceau SNDH original, entrée de test des outils musicaux.
+- **`examples/acsi-stream/`** : en-têtes C++ pour lire un sample depuis un disque dur ACSI par DMA
+  non bloquant (`docs/11`, en anglais) ; `tools/mkacsi.py` et `tools/acsi_bench.py` fabriquent et
+  utilisent une image de disque ACSI dans Hatari.
 
 ## Démarrage
 

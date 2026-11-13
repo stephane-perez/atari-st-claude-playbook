@@ -71,6 +71,9 @@ Each entry: symptom → cause → remedy. Grouped by area.
 | Disk-write bug invisible in Hatari | the GEMDOS hard-disk emulation uses no BIOS buffers and no driver | boot from a floppy image; fake resident simulating the driver |
 | Parallel-port joysticks all "pressed" in Hatari | no joystick emulated on the parallel port: lines read 0 | normal; configure Joystick 4/5 |
 | PSG register value one step late in Hatari | Hatari returns the value as of the register select | select and read twice |
+| Hard-disk loader crashes on the real machine, not in Hatari | driver refuses a buffer above a faked `phystop` (HDDriver: `Fread` = -2), result unchecked | keep the real `phystop`, check every read; or preload the data (docs/12) |
+| Music stuck on one note during hard-disk loads | interrupts masked during the swap, player stopped | mute YM registers 8-10 around the read (docs/12) |
+| 2 bombs on reset after a hard-disk-loaded game (real STE only) | game overwrote system variables still marked valid | clear `memvalid`/`memval2`/`memval3`/`resvalid` before starting the game (docs/12) |
 
 ## Hardware
 
@@ -117,6 +120,8 @@ Each entry: symptom → cause → remedy. Grouped by area.
 | Depacked picture garbled although the depacker is verified | the game transforms the data again (bit transposition) | find the routine that uses the data, compare with a Hatari screenshot |
 | Pack-Ice file decoded as garbage or error | 2.3x and 2.40 differ; `Ice!` vs `ICE!` header, some depackers treat both as 2.40 | `unice.py --variant 2.3/2.4` |
 | Rebuilt level colours wrong, pictures right | tile-set palette stored as linear 0..15 values, not in the STE order | compare index -> colour with a Hatari screenshot |
+| Label of a `movem.l d16(pc)` table 2 bytes off | Capstone prints the target from the register mask | `fix_capstone()` in `m68k_recdis.py` |
+| Data table of a labels file disassembled as code | every name taken as a code entry | prefix data names `tbl_`, `var_`, `data_`, `str_` |
 | Recursive disassembly finds "code" in data | pointer scan on a table of values | reject candidates starting with `ori` (`$00xx`), check by eye |
 | File table of a loader full of zeros | filled at run time from another sector | trace the FDC reads in Hatari |
 | A TOS ROM file of 262,145 bytes | one extra trailing byte | keep the first 256 KB (check the header: `$602E`, version, base) |
@@ -140,3 +145,14 @@ Each entry: symptom → cause → remedy. Grouped by area.
 | Fixing what you cannot reproduce | the fix may target the wrong cause | reproduce in Hatari first; if it does not reproduce, say so and ask for exact steps |
 | Guessing the cause of a hardware-only fault | trials wasted | diagnostic variants, then measurement |
 | Checksums computed without the original input | they may be wrong | label them "to re-check" and re-check as soon as the original is available |
+
+## Hard disk, ACSI DMA, streaming (docs/11)
+
+| Symptom | Cause | Remedy |
+|---|---|---|
+| Frame lost at every `Fread` of a few KB from an ACSI/UltraSatan disk | the GEMDOS read blocks the CPU until the driver is done | raw non blocking ACSI DMA command (`examples/acsi-stream`), `Fread` as fallback |
+| Raw read path never activates | the file is fragmented (probe code −4) | copy it to an empty, freshly formatted partition |
+| Bus corruption / garbage after a GEMDOS call during streaming | a second user of `$FF8604/06` while a command is in flight | no disk access until the command has finished; `flock` set |
+| Hatari shows no gain from the DMA read | Hatari's ACSI disk is instantaneous | judge timing on the real machine only |
+| TOS does not mount the FAT16 test partition | clusters larger than 1 KB | `mkfs.fat -s 2` |
+| Music plays as loud distortion | 8-bit WAV is unsigned, the STE DMA wants signed | flip the sign once (`wav2sgn.py`) |

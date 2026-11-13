@@ -276,3 +276,22 @@ python3 tools/hatari_run.py --disk out/sprtest.st --tos tos/TOS162.IMG --machine
    all seven (`rmac`, `agtcut`, `pcs2agi`, `packwrap`, `lz77`, `lzsa`, `zx0`) ran as is.
 8. The executables are linked with PRG flags `$7` (fastload + load and malloc in TT-RAM)
    (seen with `tools/prg_info.py` on `hiworld.prg`); screen buffers must still be ST-RAM.
+9. **Slow start-up with big uncompressed assets: the CRC check (optional).**
+   `spritesheet::load`, `slabsheet::load` and `tileset::load` compute a CRC over the **whole**
+   uncompressed asset file (`gen_crc`: FNV-style, one 32-bit multiplication per 16-bit word,
+   in C) and halt the program on a mismatch. With five 480–700 KB EMX sprite files this was
+   almost all of the loading time. The check only detects a corrupted file; it is **optional**.
+   AGT already has the flags `AGT_CONFIG_NO_WRAPCRC` / `AGT_CONFIG_NO_UNWRAPCRC` (used by
+   `examples/parallax/Makefile`), honoured by `load_asset` for packed files, but the three
+   loaders above ignored `AGT_CONFIG_NO_UNWRAPCRC` for plain files. Remedy: wrap their
+   `if (!packed_flag) { …gen_crc… }` block in `#if !defined(AGT_CONFIG_NO_UNWRAPCRC)` (6 added
+   lines, default behaviour unchanged) and add `-DAGT_CONFIG_NO_UNWRAPCRC` to the project's
+   compiler flags. Keep it on while developing the asset pipeline (it catches truncated copies),
+   switch it off for the release build.
+   Measured in Hatari 2.4.1 (STE 4 MB, TOS 1.62, GEMDOS drive, `--fast-forward`, VBL counter,
+   boot included): program ready after **63.6 s** of emulated time with the check, **9.8 s**
+   without. Confirmed on a real STE by the user (start-up "very fast"; no timing recorded).
+   Packing the files (`pack.sh … lz77`) is the other route but adds decompression time, and
+   the packed file's own CRC is then checked at read.
+   The AGT sources were read for this (`agtsys/spritesheet.cpp`, `compress.cpp`); the effect
+   of the patch on other loaders (`worldmap`, `pcs`) was not examined.

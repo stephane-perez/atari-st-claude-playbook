@@ -1,4 +1,4 @@
-# 11 — MPP: multi-palette and overscan pictures (ST / STE)
+# 13 — MPP: multi-palette and overscan pictures (ST / STE)
 
 MPP ("Multi Palette Picture") is a picture format and tool set by Zerkman / Sector One
 (François Galea): a PC converter `bmp2mpp` that turns a 24-bit BMP into an ST picture whose
