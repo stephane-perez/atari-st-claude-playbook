@@ -10,10 +10,10 @@ or the blitter, optionally in overscan.
   "moved"). Licence: WTFPL v2. Not copied into this repository: this page only describes it.
 - Analysed revision: `2ba52a4` (2026-05-19, "Updated the documentation"); the last release
   in the `Changelog` is 1.1 (2013-12-10).
-- **State: read from the sources only.** Neither the converter nor the viewer was built or
-  run in Hatari (building external code was refused by the session's permission check).
-  Figures below come from the README, the `Mode` table of `bmp2mpp.c` and the plugin
-  headers of `mode0.s` … `mode3.s`.
+- **State:** limits read from the README, the `Mode` table of `bmp2mpp.c` and the plugin
+  headers of `mode0.s` … `mode3.s`. `make` (host GCC + vasm 2.0f) builds `bmp2mpp`, `mpp2bmp`
+  and `mppview.tos` (warnings only), and the converter was run on a test picture (see
+  "Measured"). The viewer was **not** run (Hatari or hardware).
 
 ## Answers in short
 
@@ -107,11 +107,27 @@ Bits per palette entry: 9 (ST), 12 (STE), 15 (STE + extra).
 4. Memory: one 416 × 276 screen is 63 480 bytes, plus palettes (48 words × 276 lines,
    twice for 12-bit on ST or 15-bit); `double` doubles everything. Check on a 520 ST.
 
-## To verify in a session (not done yet)
+## Measured (converter only, 2026-11)
+
+Test picture: an original 24-bit gradient (hue across, brightness down), converted with
+`-3`, then back with `mpp2bmp`; colours counted on the BMP produced:
+
+| Run | Size | Distinct colours in picture | Max on one line | `.mpp` size | Time |
+|---|---|---|---|---|---|
+| `--mode=3 --st` | 416 × 276 | 460 (of 512) | 48 | 72 378 B | 0.06 s |
+| `--mode=3 --ste` | 416 × 276 | 2013 | 48 | 77 346 B | 0.3 s |
+| `--mode=0 --st` | 320 × 200 | 423 | 52 | 43 766 B | 0.03 s |
+| `--mode=2 --st` | 320 × 200 | 423 | 52 | 44 216 B | 0.03 s |
+| `--mode=2 --ste` | 320 × 200 | 1604 | 54 | 48 266 B | 0.1 s |
+
+These are results for this picture, not maxima: a picture with black areas also uses the
+two black entries of modes 0–2. The converter prints one `y=… gain=…` line per scanline:
+redirect it. Header seen: `MPP`, mode, flags (1 = STE), then `extra_len` = `$36` (MPPH block).
+
+## Viewing in Hatari (not done)
 
 ```sh
-cc -O3 -o bmp2mpp bmp2mpp.c -lm && cc -O3 -o mpp2bmp mpp2bmp.c pixbuf.c -lm
-vasmm68k_mot -quiet -m68000 -Ftos mppview.s -o mppview.tos
+make AS=/path/to/vasmm68k_mot             # bmp2mpp, mpp2bmp, mppview.tos
 ./bmp2mpp --mode=3 -3 test416x276.bmp && ./mpp2bmp test416x276.mpp back.bmp
 python3 tools/mkst.py out/mpp.st MPP mppview.tos:MPPVIEW.TOS test416x276.mpp:TEST.MPP
 python3 tools/hatari_run.py --disk out/mpp.st --tos tos/TOS104.IMG --machine st --mem 1024 --out out/mpp 25 35
