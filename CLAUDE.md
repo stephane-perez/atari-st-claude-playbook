@@ -126,3 +126,4 @@ Full catalogue: `docs/06-pitfalls.md`.
 | `docs/08-law-and-publication.md` | What to publish, what not to publish |
 | `docs/09-working-with-claude.md` | Way of collaborating, sessions, resuming, request templates |
 | `docs/10-agt-library.md` | AGT (Atari Game Tools, STE game framework): toolchain, build, API, assets — not in the repo |
+| `docs/11-mpp-multipalette.md` | MPP multi-palette / overscan pictures (zerkman/mpp): modes, limits per machine, format — not in the repo |
