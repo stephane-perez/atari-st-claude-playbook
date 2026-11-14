@@ -60,6 +60,9 @@ def main():
                          "direction emulated on the keyboard (see tools/hatari-joysticks.cfg)")
     ap.add_argument("--up", action="append", default=[], metavar="KEY@SEC",
                     help="key released at SEC seconds (repeatable)")
+    ap.add_argument("--shortcut", action="append", default=[], metavar="NAME@SEC",
+                    help="Hatari shortcut sent through the control socket at SEC seconds "
+                         "(repeatable), e.g. warmreset@30, coldreset@30")
     ap.add_argument("--hd-files", action="append", default=[], metavar="SRC[:DEST]",
                     help="file copied next to the program in the GEMDOS hard disk (repeatable)")
     ap.add_argument("--borders", choices=["on", "off"], default="off",
@@ -121,12 +124,15 @@ def main():
                  "Rerun the command by hand to see the error message.")
 
     events = [(w, "shot", None) for w in a.waits]
-    for kind, specs in (("key", a.key), ("keydown", a.down), ("keyup", a.up)):
+    for kind, specs in (("key", a.key), ("keydown", a.down), ("keyup", a.up),
+                        ("shortcut", a.shortcut)):
         events += [(float(k.partition("@")[2]), kind, k.partition("@")[0]) for k in specs]
     t0 = time.time()
     for t, kind, k in sorted(events, key=lambda e: e[0]):
         time.sleep(max(0, t - (time.time() - t0)))
-        if kind != "shot":
+        if kind == "shortcut":
+            conn.sendall(b"hatari-shortcut " + k.encode() + b"\n")
+        elif kind != "shot":
             win = subprocess.run(["xdotool", "search", "--name", "hatari"], env=env,
                                  capture_output=True, text=True).stdout.split()
             if win:
