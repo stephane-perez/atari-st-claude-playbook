@@ -32,5 +32,5 @@ fi
 tar xzf "$ARCHIVE"
 cd vasm
 make CPU=m68k SYNTAX=mot -j"$(nproc 2>/dev/null || echo 2)" >/dev/null
-./vasmm68k_mot 2>&1 | head -1
+./vasmm68k_mot </dev/null 2>&1 | head -1
 echo "OK: $DEST/vasm/vasmm68k_mot"
