@@ -132,3 +132,4 @@ Full catalogue: `docs/06-pitfalls.md`.
 | `docs/11-acsi-streaming.md` | Non blocking ACSI DMA reads, music streamed from disk, Hatari ACSI bench; what is verified on hardware |
 | `docs/12-hd-loaders.md` | Floppy games from hard disk: gamex, HAGA, HAG2 internals, porting a DFC game, driver compatibility, WHDLoad-like design |
 | `docs/13-mpp-multipalette.md` | MPP multi-palette / overscan pictures (zerkman/mpp): modes, limits per machine, format — not in the repo |
+| `docs/14-stsys-demosystem.md` | ST Synclock Demosystem 1.0 (Evil / DHS): parts, sequencer, music players, fullscreen/syncscroll templates — not in the repo, no licence |
