@@ -25,6 +25,7 @@ redistributable, not in the repository.
 | gamex "RAM mode" workaround | Hatari (STE 1.62, Mega STE 2.06, 1/2/4 MB) + **real STE 4 MB, HDDriver 12.53** |
 | HAGA calling conventions (12-entry version) | read in a launcher + a launcher written here, **real STE 4 MB, HDDriver 12.53**: game, loads, exit, state save and restore, reset |
 | HAG2 structure and launcher sequence | read in the code only (not run here) |
+| HAGA launcher on a machine whose RAM is reduced by software | crash reported by the user on a real STE (4 MB limited to 2 and 1 MB); **reproduced and fixed in Hatari** (see "RAM seen by TOS"); fix not yet re-tested on the machine |
 | WHDLoad-like design (last section) | proposal, nothing implemented |
 
 ## 1. The problem
@@ -166,6 +167,17 @@ per TOS version: the first letter of the name changes, e.g. `F…` for TOS ≥ 2
    the same crash on reset in one of Peter's HAGA adaptations.)
 6. HDDriver: with another HAGA game the user had to limit HDDriver's memory (Esc at boot) to
    avoid display faults: the driver lives in low RAM that the game also wants.
+7. **RAM seen by TOS.** HAGA's detection (entry 0) measures the RAM in the MMU. On a 4 MB
+   STE reduced to 2 or 1 MB by a RAM-limiter program, it still reports 4 MB, while TOS only
+   sees `phystop`. A launcher that trusts it puts HAGA (`$3F8000`) and its copies of the low
+   RAM above `phystop`, and HDDriver refuses every read there (`Fread` = -2, the same refusal
+   as with gamex above). Seen on the real machine: with "1 MB", the launcher's own read of
+   the game failed (-2); with "2 MB", the game crashed when its music changed, but only when
+   HDDriver took 79 KB instead of 59 KB (Esc at boot). The low RAM then reached 140 KB, past
+   the address where the game loads its music (`$21400`); HAGA redirected that read to its
+   copy, above `phystop`. Fix: RAM = min(HAGA's value, `phystop`), also written back into
+   HAGA's info block (byte `+7`). Hatari, 4 MB with `phystop` lowered to 2 then 1 MB: crash
+   reproduced before the fix, game running after.
 
 Results: Hatari 2.4.1 with HDDriver 12.53 on an ACSI image (STE 1.62 1 and 4 MB, Mega STE
 2.06 2 and 4 MB): game runs, loads go through the real driver, no exception. **Real STE 4 MB +
@@ -216,6 +228,12 @@ Choice by game type:
   `warmreset`). Hatari did not reproduce the real-machine reset crash: the reset fix was
   validated on the machine only.
 - One Hatari at a time on a given ACSI image (lock).
+- To imitate a user's machine: a tiny `AUTO` program can lower `phystop` (`$42E`, a RAM
+  limiter), and a resident program (`Mshrink` + `Ptermres` of N KB) grows the low RAM like a
+  bigger driver; `DESKTOP.INF` with `#Z 00 C:\DIR\RUNME.TOS@` starts the launcher from the GEM
+  desktop instead of `AUTO`, as a double-click would. A launcher that prints its low RAM size
+  and the library's areas on its start screen lets the user report the real values (a photo
+  of the screen was enough here).
 - Driver memory, read failures and timings differ on the real machine: the gamex crash was
   never reproduced in Hatari. **A loader is only "working" after a real-machine trial**, with
   the driver the user really has.
@@ -239,6 +257,9 @@ inside each launcher.
    to a HAGA-style swap per access (with read-ahead) on 1 MB machines.
 3. **Check every read** and stop visibly on failure (message + error code), never hand bad
    data to the game.
+   - **Use the RAM that TOS sees** (`phystop`), never a hardware probe alone: RAM limiters
+     exist, and the driver will not read above `phystop`. Show the low RAM size and the
+     areas used on the start screen.
 4. During a swap: mask interrupts, mute the YM (registers 8-10), restore exactly what was
    saved (vectors, MFP registers, system variables, video base, palette), flush the ACIA.
 5. Clear `memvalid`/`memval2`/`memval3`/`resvalid` before starting the game (reset = cold boot).
