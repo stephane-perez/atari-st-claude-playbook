@@ -74,6 +74,8 @@ Each entry: symptom → cause → remedy. Grouped by area.
 | Hard-disk loader crashes on the real machine, not in Hatari | driver refuses a buffer above a faked `phystop` (HDDriver: `Fread` = -2), result unchecked | keep the real `phystop`, check every read; or preload the data (docs/12) |
 | Music stuck on one note during hard-disk loads | interrupts masked during the swap, player stopped | mute YM registers 8-10 around the read (docs/12) |
 | 2 bombs on reset after a hard-disk-loaded game (real STE only) | game overwrote system variables still marked valid | clear `memvalid`/`memval2`/`memval3`/`resvalid` before starting the game (docs/12) |
+| Hard-disk game fails only when the RAM is reduced by software (4 MB machine limited to 2 or 1 MB) | the loader library measures the RAM in the MMU (4 MB) while TOS only sees `phystop`; the library and its buffers go above `phystop`, where HDDriver refuses to read (`Fread` = -2) | RAM = min(measured, `phystop`) (docs/12) |
+| Hard-disk game crashes or not depending on a few KB of driver memory (Esc at HDDriver boot "fixes" it) | the low RAM kept by a HAGA-type library grows over an address the game loads to (here its music); that read is redirected to the library's copy, which was above `phystop` | same fix; show the low RAM size and the library areas on the launcher screen to compare machines (docs/12) |
 
 ## Hardware
 
