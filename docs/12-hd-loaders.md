@@ -2,7 +2,7 @@
 
 How floppy-only games are made to run from a hard disk on the ST, what was learnt by taking
 apart Peter Putnik's systems (gamex, HAGA, HAG2), and what a WHDLoad-like system for the
-Atari ST should take from them. Later project: write such a system; this page is its input.
+Atari ST should take from them. A first implementation exists (Eidolon, section 7); this page was its input.
 
 Sources: Peter Putnik's pages (`https://atari.8bitchip.info/doinadapts.html`,
 `https://atari.8bitchip.info/fromhd2.php`), seven of his adaptations supplied by the user
@@ -26,7 +26,8 @@ redistributable, not in the repository.
 | HAGA calling conventions (12-entry version) | read in a launcher + a launcher written here, **real STE 4 MB, HDDriver 12.53**: game, loads, exit, state save and restore, reset |
 | HAG2 structure and launcher sequence | read in the code only (not run here) |
 | HAGA launcher on a machine whose RAM is reduced by software | crash reported by the user on a real STE (4 MB limited to 2 and 1 MB); **reproduced and fixed in Hatari** (see "RAM seen by TOS"); fix not yet re-tested on the machine |
-| WHDLoad-like design (last section) | proposal, nothing implemented |
+| WHDLoad-like design (section 6) | proposal; **first implementation: Eidolon, see section 7** (Hatari unless stated) |
+| Peter's image-boot programs (`IMGRF…`, section 8) | read in the code only (disassembled, not run here) |
 
 ## 1. The problem
 
@@ -291,3 +292,84 @@ inside each launcher.
 - Read-ahead size vs swap cost: to measure (each swap copies the low RAM in both directions).
 - Legal: Peter's files and ABI are his work; a new system must be an independent
   implementation, and games' data still come from the user's own copies (`docs/08`).
+
+## 7. Eidolon: a first implementation (status of the 12 principles)
+
+`stephane-perez/atari-eidolon` (version 0.0.12 when this was written): a loader for `.ST` / `.MSA`
+floppy images with per-program adapters (`.ADP`, the "slaves" of principle 8) and a mount mode.
+**Everything below was run in Hatari only** (GEMDOS hard-disk emulation, plus one check with the
+real HDDriver on an ACSI image, see the last line); the real-machine reports of the user are
+quoted as reports.
+
+| # | Principle | In Eidolon |
+|---|---|---|
+| 1 | real driver and TOS, do not fake `phystop` | mount and "run now" modes keep TOS and driver; the reset mode lowers `phystop` (as gamex) and starts the program before the driver is loaded (reset-resident pages run before the hard-disk boot; not verified with a driver in memory) |
+| 2 | preload | the whole image (all disks) in RAM, no driver call during the program; **no fallback per access: 2 MB minimum** |
+| 3 | check reads, use the RAM TOS sees | size, sum and CRC32 of the image checked and shown; a failed read stops on a red screen; RAM taken from `phystop` |
+| 4 | swap discipline | not needed (no swap) |
+| 5 | clear `memvalid`/`resvalid` at the start | **the opposite on purpose** (the image must survive a reset); to be made a choice |
+| 6 | exit and save keys | quit key per adapter or reset; **no state save** |
+| 7 | versioned ABI | resident header, service table with a count and "never renumber", adapter header `EIDOADP1` (versions 3 and 4) |
+| 8 | per-program slave | `.ADP`: header (title, image size, sum, CRC32, minimum RAM, disk table), patch lists with the original words checked, the program's own code |
+| 9 | services | disk read/write, patch, boot sector, disk select/get, key, quit, fail; **no file service, no state save** |
+| 10 | GEMDOS in RAM | not done: A: is served to the real TOS, which covers AUTO-folder programs |
+| 11 | memory budget | measured for 2 and 4 MB, not for 1 MB |
+| 12 | test matrix | Hatari STF 1.04 / STE 1.62 / Mega STE 2.06 and a Falcon fix; **real machines: reports by the user only** |
+
+Lessons of the implementation that belong to every such system:
+
+- **Mounted image, "media changed".** `Mediach` must keep answering "changed" (2) until
+  `Getbpb` is called; answering once lets the first caller (the desktop, GEMDOS) use it up and
+  the other keeps the state of the previous disk. A real STE showed an empty text file and
+  strange characters on the desktop (TeraDesk + a text editor); the change is made, **not yet
+  verified on the machine**.
+- **BPB of the image.** Some dumps have a boot sector BPB with 0 reserved sectors (the FAT is
+  really at sector 1) or none at all. Take the BPB from the boot sector only if it is sane,
+  otherwise synthesise a standard one from the size (2 sectors per cluster, 112 root entries,
+  FAT size from the number of clusters). A zeroed BPB then still gives a readable disk;
+  an image with an unusual layout (FAT of 5 sectors for 360 KB) needs the boot sector's own values.
+- **Mediach / Getbpb** idea and the `Floprate` answer without touching the drive come from an
+  open GEM mounter (STMOUNT, no licence file: ideas only, no code taken).
+- **Demos' interrupt routines clobber registers.** Adapter code that runs in the main context
+  must not keep its services pointer in a register the demo's interrupt modifies (a music player
+  used `a6`); reload it from memory.
+- **A loader's state variables.** A replacement read routine must leave the loader's progress
+  variables (position, track, sector, "sectors to go", busy flag) as its interrupt routine leaves
+  them: the program polls them. And it must not leave the interrupt mask at 7 if the original
+  lowered it (a program waited for the vertical blank at mask 7).
+- **Machine requirements are the program's**: a demo that probes the blitter (`$FFFF8A20`) resets
+  in a loop on an STF even from its own floppy; test it on an STE before blaming the loader.
+- **Test bench with a real driver.** A 512 MB SD-card image holding HDDriver 12.53 (root sector
+  boot code + `HDDRIVER.SYS`, a 60 MB FAT16 partition and a FAT32 one) boots in Hatari
+  (STE 1.62, 4 MB, `--acsi 0=image`, a non-bootable floppy in A:): `hdv_bpb`/`hdv_rw` point
+  into low RAM (`$DFxx`) and `_memtop` is lowered by 32 KB. A launcher is started with a
+  `DESKTOP.INF` line `#Z 00 C:\DIR\PROG.TOS@ @`. The image is private; with it Cuddly Demos in
+  reset mode still reached its menu (the user's real-machine bombs are **not reproduced**).
+
+## 8. Peter's image-boot programs (`IMGRF1`, `IMGRF162`, `IMGRF2`, `IMGRF216`, `IMGRF2X`)
+
+Five small programs (2.5 to 4 KB) given by the user, read in the code only. As in section 2,
+nothing of them is in the repository.
+
+- One program per TOS (1.04; 1.62/1.06; 2.06 twice; 2.06 with an optional TOS file). Each refuses
+  another TOS (message "Program is for TOS x.xx"). The image name comes from the command line
+  (`.TTP`, drag and drop, or "Install Application" for the `ST` / `MSA` types).
+- The image (`.ST`, or `.MSA` unpacked by the program: RLE with the `$E5` marker) is read into
+  the top of RAM; `phystop` is lowered by its size plus 4 KB and the screen is put 32 KB below.
+- **No reset**: pieces of the TOS ROM cold-start code are copied into the program (addresses
+  fixed per TOS version, hence one program per version), recomposed in a routine copied to
+  `phystop+$20` and run in supervisor mode. It clears `$980`-`$10000`, rebuilds the vectors and
+  system variables and restarts the ROM initialisation. `_drvbits` is reset: the hard-disk driver
+  is dropped (no C: afterwards).
+- Hooks: `hdv_bpb`, `hdv_rw`, `hdv_mediach` and the XBIOS trap, like Eidolon. `_drvbits` = 3 and
+  `_nflops` = 2: device 0 is served from the image, device 1 is passed to the old handlers as
+  device 0, so **the real floppy drive stays usable as B:**.
+- Boot: sector 0 is read with `Floprd`; if its sum is `$1234` it is run, else the TOS goes on to
+  `\AUTO`.
+- `IMGRF2X` (TOS 2.06 machines) also reads the Shift keys (`Kbshift`) and loads a **packed
+  TOS 1.04** from a `.FIC` file: the LZ of section 2 (the same format), 192 KB once unpacked,
+  relocated like RAMTOS (words with a high byte `$FC` to `$FE` moved, except a table of offsets),
+  then run as a TOS in RAM (`resvalid` = `$31415926`, code at `phystop+$20`).
+- Ideas not yet in Eidolon: the real floppy as B: while the image is A:; keys at the start
+  (Shift, Control, Alternate) to choose a mode without a menu.
+
