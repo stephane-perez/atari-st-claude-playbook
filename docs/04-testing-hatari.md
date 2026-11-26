@@ -70,6 +70,9 @@ tools/hatari_run.py --prg JOYTEST.TOS --tos tos/etos512uk.img --machine ste \
   "Practical details" below).
 - `--down`/`--up` hold a key between two times (a direction "held" when the screenshot is
   taken); `--key` is a short tap.
+- `--shortcut NAME@SEC` sends a Hatari shortcut through the control socket at that time,
+  e.g. `--shortcut warmreset@30` or `coldreset@30` (repeatable): reset tests without a
+  keyboard (docs/12).
 - Verified (Hatari 2.4.1, EmuTOS 1.3, Nov 2026) with JOYTEST: all six joysticks above react.
 - With no joystick emulated on the parallel port, Hatari reads the 8 data lines as 0, i.e.
   "everything pressed" (lines are active low): a program decoding them shows incoherent
