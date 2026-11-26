@@ -137,3 +137,4 @@ Full catalogue: `docs/06-pitfalls.md`.
 | `docs/12-hd-loaders.md` | Floppy games from hard disk: gamex, HAGA, HAG2 internals, porting a DFC game, driver compatibility, WHDLoad-like design |
 | `docs/13-mpp-multipalette.md` | MPP multi-palette / overscan pictures (zerkman/mpp): modes, limits per machine, format — not in the repo |
 | `docs/14-stsys-demosystem.md` | ST Synclock Demosystem 1.0 (Evil / DHS): parts, sequencer, music players, fullscreen/syncscroll templates — not in the repo, no licence |
+| `docs/15-disk-structures.md` | Atari disk structures: AHDI root sector, GEM/BGM/XGM/ICD, boot sector, FAT, directory entries; MBR/GPT, VFAT long names, FAT32/XHDI ids; testing disk tools in Hatari; Lattice→GCC pitfalls |

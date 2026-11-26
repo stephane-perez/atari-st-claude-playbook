@@ -158,3 +158,16 @@ Each entry: symptom → cause → remedy. Grouped by area.
 | Hatari shows no gain from the DMA read | Hatari's ACSI disk is instantaneous | judge timing on the real machine only |
 | TOS does not mount the FAT16 test partition | clusters larger than 1 KB | `mkfs.fat -s 2` |
 | Music plays as loud distortion | 8-bit WAV is unsigned, the STE DMA wants signed | flip the sign once (`wav2sgn.py`) |
+
+## Disk structures and disk tools (docs/15)
+
+| Symptom | Cause | Remedy |
+|---|---|---|
+| A ported disk tool crashes or walks the FAT forever on any disk with a folder | `short` cluster compared with an `unsigned short` end mark: 16 bits in Lattice C, `int` in GCC | cast to `(short)`; scan with a clang AST check (GCC does not warn) |
+| Partition editor shows garbage partitions on a CF/SD card | DOS MBR or GPT table read as an AHDI root sector (the tables overlap) | detect `55AA` + valid DOS entries and refuse to write sector 0 |
+| Long file names disappear after a disk check or sort | VFAT entries (`$0F`) taken for extra volume labels or bad entries, or separated from their 8.3 entry | treat a long name + its 8.3 entry (checksum) as one unit; remove only orphans |
+| "Bad FAT entries" on a disk that `fsck.fat` finds clean | chains ending with `$FFF8`–`$FFFE`, allowed by the FAT specification | normalise end values to `$FFFF` when loading the FAT |
+| "Cannot read boot sector" on one drive letter | FAT32 partition: EmuTOS/HDDRIVER give it a letter, TOS cannot read it | recognise it (XHDI `XHInqDev2` id `F32` / DOS `$0B`, `$0C`) and say it is not supported |
+| A CR glyph at the end of every line of a text file | Lattice `"ra"` mode removed CRs, the GCC C libraries do not | drop a trailing `\r` after `fgets` |
+| Image "fine" for `fsck` but file contents corrupted after an emulated optimisation | Hatari stopped before the operation ended | wait long enough (`--fast-forward on`), compare file hashes |
+
