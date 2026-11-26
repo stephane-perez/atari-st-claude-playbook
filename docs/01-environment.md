@@ -15,6 +15,17 @@ Unicorn 2.1.4.
 TOS ROMs are copyrighted by Atari: they go neither in the repository nor in a release.
 The repository's `.gitignore` excludes `tos/`, `*.img`, `*.rom`, `build/`, `.tools/`.
 
+### Private companion repository (the owner's set-up)
+
+The owner keeps what must not be published in a **separate private repository** checked out
+next to this one: TOS ROMs (1.00, 1.04, 1.62, 2.06, 4.04), the cross-mint `.deb` built by
+`scripts/get-cross-mint.sh`, third-party libraries (AGT, docs/10; stsys, docs/14) and
+hard-disk images. Its `install.sh <playbook>` puts the ROMs in `tos/` (1.62 dump cut to 256 KB,
+version word checked, `tos-x.yy.img` links for `smoke-test.sh`), installs the `.deb` and
+unpacks the libraries under `/opt` (short paths). The cloud environment's setup script runs
+`scripts/setup-dev.sh` then that `install.sh`, so a new session starts with everything in
+place. Nothing from the private repository is ever copied into this one (rule 5).
+
 ## Installation
 
 ```sh

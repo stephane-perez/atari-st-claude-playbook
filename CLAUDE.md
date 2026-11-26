@@ -49,7 +49,11 @@ sh scripts/smoke-test.sh                # proves the chain: vasm -> Hatari -> TO
 - If the workspace network is restricted (allowlist: package repositories, GitHub),
   `get-vasm.sh` falls back to `third_party/vasm/vasm.tar.gz` (vasm 2.0f, unmodified, its own
   non-commercial licence); a newer `vasm.tar.gz` can still be attached and passed as argument.
-- Expected ROMs: **1.04 → STF**, **1.62 → STE**, **2.06 → Mega STE**, **4.04 → Falcon**.
+- Expected ROMs: **1.04 → STF**, **1.62 → STE**, **2.06 → Mega STE**, **4.04 → Falcon**;
+  **1.00 → 520 ST** for the 512 KB tests.
+- The owner's cloud environment installs everything at start-up from a private companion
+  repository (ROMs, cross-mint `.deb`, AGT, stsys, hard-disk images; docs/01). If
+  `tos/TOS104.IMG` is missing, run its `install.sh` before anything else.
 - No ROM available: EmuTOS 1.3 in Hatari (`docs/04`), never the US image for timing, and
   report "verified with EmuTOS".
 - `make` builds the example, `make check` verifies reproducibility.
@@ -63,7 +67,7 @@ sh scripts/smoke-test.sh                # proves the chain: vasm -> Hatari -> TO
 | Disassemble / emulate the CPU | Capstone, Unicorn | `tools/emu_snippets.py` (tested templates) |
 | Recursive disassembly | `tools/m68k_recdis.py` | flow-following study listing, labels file, `--pointer-scan` (docs/03) |
 | Identical source | `tools/m68k_mksrc.py` | raw image -> vasm source, checked byte for byte with `--check` (docs/03) |
-| Test without a screen | `tools/hatari_run.py` | Xvfb + xdotool, screenshots, keys (docs/04) |
+| Test without a screen | `tools/hatari_run.py` | Xvfb + xdotool, screenshots, keys, `--shortcut warmreset@SEC` (docs/04) |
 | Simulate joysticks | `tools/hatari-joysticks.cfg` | all 6 joysticks on the keyboard, `--down`/`--up` (docs/04) |
 | Floppy image | `tools/mkst.py` | dependency-free FAT12 720/820 KB, reproducible |
 | GEMDOS calls, memory | `--extra "--trace gemdos"` | `Pexec`/`Mshrink`/`Malloc` in `<out>/hatari.log` (docs/04, docs/05) |
