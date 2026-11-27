@@ -26,6 +26,7 @@ redistributable, not in the repository.
 | HAGA calling conventions (12-entry version) | read in a launcher + a launcher written here, **real STE 4 MB, HDDriver 12.53**: game, loads, exit, state save and restore, reset |
 | HAG2 structure and launcher sequence | read in the code only (not run here) |
 | HAGA launcher on a machine whose RAM is reduced by software | crash reported by the user on a real STE (4 MB limited to 2 and 1 MB); **reproduced and fixed in Hatari** (see "RAM seen by TOS"); fix not yet re-tested on the machine |
+| HAGA launcher on Falcon (12-entry `HAGA`) | crash reported by the user on a real Falcon; cause found and fixed in Hatari 2.4.1 (Falcon 14 MB, TOS 4.04, SCSI, `--mmu on`); see "TT and Falcon"; **not yet re-tested on the machine** |
 | WHDLoad-like design (section 6) | proposal; **first implementation: Eidolon, see section 7** (Hatari unless stated) |
 | Peter's image-boot programs (`IMGRF…`, section 8) | read in the code only (disassembled, not run here) |
 
@@ -147,6 +148,35 @@ per TOS version: the first letter of the name changes, e.g. `F…` for TOS ≥ 2
 - State save: writes `GSnn.TOS`, a self-contained program that restores the game when started
   from the desktop (525,108 bytes in Hatari for a 4 MB STE: the low 512 KB plus a header).
 
+### TT and Falcon: HAGA swaps low RAM with the MMU
+
+Read in the 12-entry `HAGA` and checked in Hatari 2.4.1 (Falcon, TOS 4.04, `--mmu on`):
+
+- Info block `+3` (`HAGA+$83`) is the machine type: `4` Falcon, `5` TT (1, 2, 3 for the others;
+  3 = Mega STE, whose cache register `$FF8E21` it writes). Entry 0 also sets `CACR` and
+  `$FFFF8007` from the 8-byte input block (`$0809` and `$45` with the block copied from an
+  existing launcher: 68030 instruction cache on, 16 MHz).
+- For types 4 and 5, entry 2 copies the TOS MMU root table (TOS 4 keeps it in low RAM, at
+  `$700`, where the game will write) into HAGA's area and loads it. Around each TOS call the
+  file service no longer copies memory: it rewrites two descriptors so that the **first MB and
+  `$200000-$2FFFFF` trade places**, and adds `$200000` to any destination below `$300000`
+  (the game's RAM is then seen at `$2xxxxx`). This needs the low RAM snapshot at the fixed
+  address `$200008` ("fixed" path, 4 MB and more).
+- Without `--mmu on` this path cannot work in Hatari (the TOS then reads the game's data where
+  its tables should be, and the first call never returns).
+- Consequences for a launcher (the second and third points were added as precautions and are
+  **not proven necessary**: the emulator did not need them):
+  - code written for the 68000 runs on a 68030: see the `rte` pitfall (docs/06). That was the
+    whole crash here, in the game's music player;
+  - during the call the TOS sees `$200000-$2FFFFF` as its first MB: copying only the low RAM
+    (up to the launcher) leaves stale data after it; copying the whole first MB is cheap;
+  - a DMA driver (ACSI, SCSI) writes to **physical** addresses, past the MMU, so a read sent
+    to `$2xxxxx` would land there and not in the game: read into a buffer the MMU does not
+    remap (e.g. `$300000`) and copy it with the CPU; keep the 68030 caches off since code is
+    then copied over old code.
+- Forcing HAGA to its STE path on a Falcon (type byte set to 2 after entry 2) does not work:
+  the first `Fopen` then fails with -33 (file not found).
+
 ### Porting a DFC game to HAGA (done here, verified on a real STE 4 MB)
 
 1. Find the game's sector-read routine (parameters: first sector, count, destination). It
@@ -229,6 +259,9 @@ Choice by game type:
   `warmreset`). Hatari did not reproduce the real-machine reset crash: the reset fix was
   validated on the machine only.
 - One Hatari at a time on a given ACSI image (lock).
+- Falcon/TT: same image on `--scsi 0=` (the Falcon of Hatari did not boot it on `--acsi`) and
+  `--mmu on`; an adaptation of Peter's with the 16-entry HAGA and his gamex version both ran there,
+  which is how the bench was trusted before looking for the fault in the new launcher.
 - To imitate a user's machine: a tiny `AUTO` program can lower `phystop` (`$42E`, a RAM
   limiter), and a resident program (`Mshrink` + `Ptermres` of N KB) grows the low RAM like a
   bigger driver; `DESKTOP.INF` with `#Z 00 C:\DIR\RUNME.TOS@` starts the launcher from the GEM

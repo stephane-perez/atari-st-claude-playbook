@@ -125,6 +125,12 @@ the `-L` listing.
 - **Stack at interrupt entry**: `m a7 8` shows the stacked SR and return address (who was
   interrupted, and at which mask level).
 - **Who writes where**: `b ($ADR).w ! ($ADR).w` stops when the value changes.
+- **Crash too far away for breakpoints** (MMU on, long runs): point the illegal / address / bus
+  error vectors at a tiny recorder (`movem.l d0-a7` to a free address, copy 64 bytes from the
+  stack, then `bra.s *`). The machine loops instead of halting, so the control socket still
+  answers: `r`, then `savebin ram.bin $0 $80000`, and read the stacked SR/PC and the stack
+  offline. A stack 2 bytes off from the expected `movem`/`jsr` layout pointed straight at a
+  68000-only `rte` (docs/06).
 - **Prove a memory area is free**: fill it with a pattern at start-up (`loadbin` at the first
   breakpoint on the entry point), play for several minutes on every machine, then read it
   back (`savebin`) and compare. Disassembly alone only proves that nothing *visible* uses it.
@@ -263,6 +269,13 @@ A test that passes in Hatari **does not prove** it works on a machine; write
 - TOS 2.06 uses $5840 bytes more RAM than 1.04.
 - Falcon with TOS 4.04: `--mmu on`. TOS 4 enables the MMU (root table at `$700`); without
   `--mmu on`, Hatari ignores it and programs that overwrite low memory behave differently.
+- Falcon with a hard-disk image: the Falcon of Hatari 2.4.1 did **not** boot the driver from
+  `--acsi 0=img`; `--scsi 0=img` works (same image, HDDriver).
+- With `--mmu on`, emulation is several times slower, and conditional breakpoints or `history`
+  make it crawl (a crash reached in about 40 s took more than 500 s without being reached).
+- Observed with `--mmu on` (Falcon, TOS 4.04): while a program had remapped low memory with the
+  MMU, the VBL vector was taken from **physical** `$70`, not through the MMU. Not checked on a
+  real 68030 (expected to go through the MMU there).
 
 ## Floppy images
 

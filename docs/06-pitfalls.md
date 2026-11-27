@@ -101,6 +101,7 @@ Each entry: symptom → cause → remedy. Grouped by area.
 | First key lost after a long drawing | ACIA overrun by an IKBD packet | drain the ACIA until silence, skip packets by length |
 | STE pad buttons read `$FFFF` | `$FF9202` read before `$FF9200` | buttons first |
 | `rte` jumps anywhere on Falcon | hand-built exception frame without format word | test `_longframe`, push a format word |
+| Game runs on ST/STE, on Falcon/TT jumps to a wild address (illegal instruction, then double bus fault) a few frames after a load | a routine called by `bsr` returns with `move.w sr,-(a7)` … `rte`: 6 bytes popped on a 68000, 8 on a 68030 (format word); each call shifts the stack by 2 bytes and a later `rts` pops garbage | on 68030 only, replace each `rte` by `trap #n` whose handler does `addq.l #8,a7` / `move.w (a7)+,sr` / `rts`; patch again after every load of that code (docs/12) |
 | Reset reruns the program | `resvalid`/`resvector` set by the program | clear `$426` |
 | Music and game too fast on Falcon VGA | not 50 Hz | use an RGB monitor; document it |
 | False fire on parallel-port joystick | BUSY line floating | pull-up on BUSY |
